@@ -1,46 +1,27 @@
-## React/Redux + Express Boilerplate in ES6/7 & Docker
+## National Open Data Elections Project Website
 
-_**Get your React application up and running under 2 minutes!**_
-
-I wrote a [blog post](https://medium.com/@misaogura/hello-world-once-more-4d262286f138) on why I created this boilerplate and thoughts that went into it.
-
-## Updates
-- The React and related libraries are updated to the latest version as of 10/10/2017
-- The client side is hooked up with Redux! 09/10/2017
-- The app runs in Docker! 11/08/2017
-
-## Instructions
+## Installation Instructions
 
 ### To run the app locally
 
-1. Make sure you have `node` and `npm` installed, if not refer to below.
-    - Mac users: https://changelog.com/posts/install-node-js-with-homebrew-on-os-x
-    - Windows users: http://blog.teamtreehouse.com/install-node-js-npm-windows
+1. Make sure you have `node` and `npm` installed.
     
 2. Alternatively, use [yarn](https://yarnpkg.com/en/) for faster dependency installation
     and more stable dependency management. You can use `yarn` in the place of `npm`.
-    ```
-    $ yarn install
-    ```
-    instead of
-    ```
-    $ npm install
-    ```
-    - Instructions for installation: https://yarnpkg.com/lang/en/docs/install/
     
 3. Clone the repository.
     - Using SSH (recommended):
     ```
-    $ git clone git@github.com:MisaOgura/react-express-docker-boilerplate.git
+    $ git clone git@github.com:kalcicd/node_project.git
     ```
     - Using HTTPS:
     ```
-    $ git clone https://github.com/MisaOgura/react-express-docker-boilerplate.git
+    $ git clone https://github.com/kalcicd/node_project.git
     ```
     
 4. Move into the cloned directory.
     ```
-    $ cd react-express-docker-boilerplate
+    $ cd node_project
     ```
 
 5. Install dependencies.
@@ -108,18 +89,3 @@ and coverage report.
     ```
     $ npm/yarn test:watch
     ```
-
-Happy TDD!
-
-
-## Contributions
-
-Please feel free to raise PRs or open issues to help improve the boilerplate.
-
-#### Many thanks to:
-- [sammorrow](https://github.com/sammorrow)
-- [Joseph Goodwin](https://github.com/jcgoodwin86)
-
-## Authour
-
-Misa Ogura
