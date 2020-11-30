@@ -7,9 +7,11 @@ export default function Index (props) {
       <Title/>
       <div id="mainColumn">
         <div id="searchBarWrapper">
-          <img src="/icons/search.svg" id="searchIcon"></img>
+          <a href='/location'>
+            <img src="/icons/search.svg" id="searchIcon"/>
+          </a>
           <input type="text" id="searchBar" className="flexGrow"
-                 placeholder="Enter address for officeholders, contact information, and meetings">
+            placeholder="Enter address for officeholders, contact information, and meetings">
           </input>
         </div>
         <div id="descriptionText">

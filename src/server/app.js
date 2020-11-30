@@ -9,6 +9,7 @@ import AboutUs from '../client/components/aboutus'
 import Volunteer from '../client/components/volunteer'
 import Developers from '../client/components/developers'
 import Error404 from '../client/components/404'
+import Location from '../client/components/location'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -39,6 +40,21 @@ app.get('/developers', (req, res, next) => {
   const renderedContent = renderToString(<Developers/>)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/developers.css')
+  res.status(200).send(page)
+})
+
+// Generate Results page
+app.get('/location', (req, res, next) => {
+  const { lat, lon } = req.query
+  // if we don't receive any latitude or longitude params in request, 404
+  // commenting this out for the prototype
+  // if (lat === undefined || lon === undefined) {
+  //   res.status(404).redirect('/404')
+  //   return
+  // }
+  const renderedContent = renderToString(React.createElement(Location, {lat, lon}))
+  let page = template.replace('<!-- CONTENT -->', renderedContent)
+  page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
   res.status(200).send(page)
 })
 
