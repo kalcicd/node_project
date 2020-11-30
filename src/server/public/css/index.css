@@ -26,6 +26,8 @@
 #descriptionText{
 	font-size: 1.3rem;
 	line-height: 2.1rem;
+	font-family: sans-serif;
+	font-weight: bold;
 }
 #descriptionText>p{
 	text-align: center;
