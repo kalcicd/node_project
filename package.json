@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MisaOgura/react-express-docker-boilerplate.git"
+    "url": "https://github.com/kalcicd/node_project.git"
   },
   "keywords": [
     "javascript",
@@ -31,12 +31,9 @@
     "docker",
     "jest"
   ],
-  "author": "Misa Ogura",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/MisaOgura/react-express-docker-boilerplate/issues"
-  },
-  "homepage": "https://github.com/MisaOgura/react-express-docker-boilerplate#readme",
+  "author": "NODE Project Team",
+  "license": "MIT",
+  "homepage": "https://github.com/kalcicd/node_project#readme",
   "dependencies": {
     "react": "^16.0.0",
     "react-dom": "^16.0.1",
