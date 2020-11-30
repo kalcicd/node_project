@@ -7,7 +7,7 @@ describe('HelloWorld', () => {
   let wrapper
 
   beforeEach(() => {
-    wrapper = shallow(<HelloWorld />)
+    wrapper = shallow(<HelloWorld/>)
   })
 
   it('has the correct class name', () => {

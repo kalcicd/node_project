@@ -7,8 +7,8 @@ const plugins = [
     verbose: true
   }),
   new HtmlWebpackPlugin({
-    template: path.join(__dirname, 'src/server/views/index.html'),
-    filename: 'index.html',
+    template: path.join(__dirname, 'src/server/views/layout.html'),
+    filename: 'layout.html',
     inject: 'body'
   })
 ]
