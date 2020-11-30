@@ -6,6 +6,7 @@ import { renderToString } from 'react-dom/server'
 
 import Index from '../client/components/index'
 import AboutUs from '../client/components/aboutus'
+import Volunteer from '../client/components/volunteer'
 import Developers from '../client/components/developers'
 import Error404 from '../client/components/404'
 
@@ -29,9 +30,9 @@ app.get('/about', (req, res, next) => {
 	res.status(200).send(page);
 });
 app.get('/volunteer', (req, res, next) => {
-	const renderedContent = renderToString(<AboutUs />);
+	const renderedContent = renderToString(<Volunteer />);
 	let page = template.replace("<!-- CONTENT -->",renderedContent);
-	page = page.replace("<!-- STYLESHEET -->","/css/aboutus.css");
+	page = page.replace("<!-- STYLESHEET -->","/css/volunteer.css");
 	res.status(200).send(page);
 });
 app.get('/developers', (req, res, next) => {
