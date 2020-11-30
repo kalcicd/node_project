@@ -1,6 +1,7 @@
 # Dependency directory
 node_modules
 .DS_Store
+package-lock.json
 
 # IntelliJ
 /.idea
@@ -13,3 +14,6 @@ dist/
 
 # Jest testing
 coverage
+
+#Vim swap files
+*.swp
