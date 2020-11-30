@@ -1,14 +1,16 @@
-#mainColumn{
-	text-align: center;
-	font-family: sans-serif;
-	font-weight: bold;
+#mainColumn {
+    text-align: center;
+    font-family: sans-serif;
+    font-weight: bold;
 }
-#sectionHeader{
-	margin-top: 4rem;
-	margin-bottom: 2rem;
-	font-size: 1.9rem;
+
+#sectionHeader {
+    margin-top: 4rem;
+    margin-bottom: 2rem;
+    font-size: 1.9rem;
 }
-#mainColumn>p{
-	font-size: 1.3rem;
-	line-height: 2.1rem;
+
+#mainColumn > p {
+    font-size: 1.3rem;
+    line-height: 2.1rem;
 }

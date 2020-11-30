@@ -3,7 +3,7 @@ import { changeMessage, CHANGE_MESSAGE, defaultMessage } from '../redux/'
 import reducer from '../redux/exampleReducer'
 
 describe('store, reducers, action creators', () => {
-  let rootReducer = combineReducers({exampleReducer: reducer})
+  let rootReducer = combineReducers({ exampleReducer: reducer })
   let fakeStore
   beforeEach(() => {
     fakeStore = createStore(rootReducer)
