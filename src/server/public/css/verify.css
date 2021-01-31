@@ -1,0 +1,70 @@
+.hidden{
+	display: none !important;
+}
+
+#verifierColumn{
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.submission{
+	border: 1px solid black;
+	border-radius: 3px;
+	width: calc(100%-16px);
+	margin: 10px auto;
+	display: flex;
+	flex-direction: column;
+	padding: 5px;
+}
+
+.submissionHeader{
+	width: 100%;
+	font-size: 1.5rem;
+	text-decoration: underline;
+	font-weight: bold;
+}
+
+.submissionButtons{
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	flex-wrap: wrap;
+}
+.submissionButtons>button,.submissionAcceptButton,.submissionRejectButton{
+	flex-shrink: 0;
+	border: 1px solid black;
+	border-radius: 0.1rem;
+	font-size: 1rem;
+	background-color: rgba(0,0,0,0.3);
+}
+
+.submissionBody{
+	width: 100%;
+}
+
+.submissionUpdateTable{
+	width: 100%;
+	border-collapse: collapse;
+	border: 1px solid black;
+}
+.submissionUpdateTableHeaderRow{
+	background-color: rgba(0,0,0,0.2);
+}
+
+.submissionAcceptButton,.submissionRejectButton{
+	margin: 3px auto;
+}
+.submissionRejectReasonRadioButtons{
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-around;
+	width: 100%;
+}
+.submissionRejectReasonLabel{
+	font-size: 1rem;
+}
+.submissionRejectReasonTextArea{
+	width: 100%;
+}

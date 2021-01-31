@@ -10,6 +10,7 @@ import Volunteer from '../client/components/volunteer'
 import Developers from '../client/components/developers'
 import Error404 from '../client/components/404'
 import Location from '../client/components/location'
+import Verify from '../client/components/verify'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -40,6 +41,22 @@ app.get('/developers', (req, res, next) => {
   const renderedContent = renderToString(<Developers/>)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/developers.css')
+  res.status(200).send(page)
+})
+
+//show a selection of unverified submittions
+app.get('/verify', (req, res, next) => {
+  //todo: redirect if the user does not have the proper permissions
+  let submissions=[{
+    "title":"Test Submission",
+    "type":"location",
+    "reference":"en.wikipedia.org",
+    "id":0,
+    "updates":[["Location","Corvalis","Corvallis"]]
+  }]
+  const renderedContent = renderToString(<Verify submissions={submissions}/>)
+  let page = template.replace('<!-- CONTENT -->',renderedContent)
+  page = page.replace('<!-- STYLESHEET -->', '/css/verify.css')
   res.status(200).send(page)
 })
 

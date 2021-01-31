@@ -18,6 +18,15 @@ export function HeaderBar (props) {
     ['Volunteer', '/volunteer'],
     ['Developers', '/developers']
   ]
+  if(true || props.hasOwnProperty("logged_in") && props.logged_in==true){
+    if(true || props.hasOwnProperty("is_verifier") && props.is_verifier==true){
+	   titleLinks.push(["Verify Submissions","/verify"]);
+    }
+    //titleLinks.push(["",""]);
+  }
+  else{
+  	 titleLinks.push(["Log In","/login"]);
+  }
   const titleElems = []
   titleLinks.forEach((link, i) => {
     titleElems.push(<a href={link[1]} className="headerLink" key={i}>{link[0]}</a>)
