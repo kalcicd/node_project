@@ -47,16 +47,24 @@ app.get('/developers', (req, res, next) => {
 //show a selection of unverified submittions
 app.get('/verify', (req, res, next) => {
   //todo: redirect if the user does not have the proper permissions
+  //todo: fetch submissions from database
   let submissions=[{
-    "title":"Test Submission",
+    "title":"Corvalis",
     "type":"location",
-    "reference":"en.wikipedia.org",
+    "reference":"https://en.wikipedia.org",
     "id":0,
     "updates":[["Location","Corvalis","Corvallis"]]
+  },{
+    "title":"Corvallis City Council Member",
+    "type":"office",
+    "reference":"https://en.wikipedia.org",
+    "id":0,
+    "updates":[["OfficeTitle","City Council Member","City Councilor"]]
   }]
   const renderedContent = renderToString(<Verify submissions={submissions}/>)
   let page = template.replace('<!-- CONTENT -->',renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/verify.css')
+  page = page.replace('<!--SCRIPT-->','<script src="/js/verify.js" defer></script>');
   res.status(200).send(page)
 })
 
