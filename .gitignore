@@ -17,3 +17,6 @@ coverage
 
 #Vim swap files
 *.swp
+
+#session secret key
+secret.txt

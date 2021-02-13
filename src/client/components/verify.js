@@ -11,9 +11,11 @@ export default function Verify(props){
   else{
     forVerification.push(<div className="noSubmissionMessage">There are no submissions to review</div>);
   }
+  let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
+  let is_verifier = (props.is_verifier!=undefined)?props.is_verifier:false;
   return(
     <div id="app">
-      <Title/>
+      <Title logged_in={logged_in} is_verifier={is_verifier}/>
       <div id="mainColumn">
         <div id="verifierColumn">
           {forVerification}
@@ -124,6 +126,7 @@ export class UnverifiedSubmission extends React.Component{
 }
 
 export class RejectionReasonRadioButton extends React.Component{
+  //a radio button which describes the reason for rejecting a submission
   constructor(props){
     super(props);
     this.name = props.name;
@@ -142,7 +145,7 @@ export class RejectionReasonRadioButton extends React.Component{
   render(){
     return(
       <label className="submissionRejectReasonLabel">
-        <input type="radio" name={this.name} data-change={this.handleChange}></input>
+        <input type="radio" name={this.name} onChange={this.handleChange}></input>
         {this.label}
       </label>
     );
