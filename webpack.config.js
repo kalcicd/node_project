@@ -15,7 +15,7 @@ const plugins = [
 
 module.exports = {
   devtool: 'eval-source-map',
-  entry: ['./src/client'],
+  entry: ['./src/client/components'],
   output: {
     filename: 'bundle.js',
     path: path.join(__dirname, 'dist')
