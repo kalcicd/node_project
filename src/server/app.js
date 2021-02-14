@@ -45,15 +45,15 @@ function userLoginStatus (req) {
   // extracts the relevant user data from the active session and returns it in a dict
   let statusDict = { 'logged_in': false, 'is_verifier': false }
   if (req.session === undefined || req.session.user === undefined) {
-    return statusDict
+    return statusDict;
   }
-  statusDict['logged_in'] = true
-  statusDict['username'] = req.session.user
+  statusDict['logged_in'] = true;
+  statusDict['username'] = req.session.user;
   if (req.session.is_verifier === undefined || req.session.is_verifier === false) {
-    return statusDict
+    return statusDict;
   }
   statusDict['is_verifier'] = true
-  return statusDict
+  return statusDict;
 }
 
 app.get('/', (req, res, next) => {
@@ -160,17 +160,20 @@ app.post('/login', (req, res, next) => {
       function (err, result) {
         if (err === undefined) { // no errors occurred
           if (result) { // login was successful
-            req.session.user = username
-            req.session.is_verifier = temporaryUsersTable[username].is_verifier
-            res.redirect('/')
+            req.session.user = username;
+            req.session.is_verifier = temporaryUsersTable[username].is_verifier;
+            res.redirect('/');
           } else { // login failed
-            loginFailed()
+            loginFailed();
           }
         } else { // an error occurred
-          res.status(500).send('')
+          res.status(500).send('A server error occurred, please try again');
         }
       }
     )
+  }
+  else{ // user does not exist
+    loginFailed();
   }
 })
 // handle user logout
