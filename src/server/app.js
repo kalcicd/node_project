@@ -129,8 +129,7 @@ app.get('/verify', (req, res, next) => {
 
 // User login page
 app.get('/login', (req, res, next) => {
-  let showLoginError = (req.query.verificationFailed !== undefined)
-  const renderedContent = renderToString(<Login />)
+  const renderedContent = renderToString(<Login/>)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/login.css')
   // page = page.replace('<!--SCRIPT-->','<script src="/js/verify.js" defer></script>');
@@ -147,7 +146,10 @@ app.post('/login', (req, res, next) => {
 
   // function to be called if the user's credentials are rejected
   function loginFailed () {
-    res.redirect(403, '/login?verificationFailed=true')
+    const renderedContent = renderToString(<Login loginFailed={true}/>)
+    let page = template.replace('<!-- CONTENT -->', renderedContent)
+    page = page.replace('<!-- STYLESHEET -->', '/css/login.css')
+	 res.status(403).send(page);
   }
 
   let username = req.body.user

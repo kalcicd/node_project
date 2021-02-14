@@ -8,10 +8,15 @@ export default class Login extends React.Component{
   }
 
   render(){
+    let message = <div></div>;
+    if(this.props.loginFailed!==undefined && this.props.loginFailed===true){
+      message = <div id="loginErrorMessage">Username or password was incorrect</div>;
+	 }
     return(
       <div id="app">
         <Title/>
         <div id="mainColumn">
+		    {message}
           <form id="userLoginForm" method="POST" action="/login">
             <label className="formLabel">
               Username

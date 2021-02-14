@@ -1,3 +1,11 @@
+#loginErrorMessage{
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: -1rem;
+  color: red;
+  font-size: 1.5rem;
+}
+
 #userLoginForm{
 	display: flex;
 	flex-direction: column;
