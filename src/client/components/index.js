@@ -9,7 +9,7 @@ export default function Index (props) {
       <Title logged_in={logged_in} is_verifier={is_verifier} />
       <div id='mainColumn'>
         <form action='/search' method='GET' id='searchBarWrapper'>
-          <button type='submit'>
+          <button type='submit' id="searchButton">
             <img src='/icons/search.svg' id='searchIcon' />
           </button>
           <input name='q' type='text' id='searchBar' className='flexGrow'
