@@ -15,8 +15,11 @@ dist/
 # Jest testing
 coverage
 
-#Vim swap files
+# Vim swap files
 *.swp
 
 #session secret key
 secret.txt
+
+# Config file
+config/default.json
