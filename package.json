@@ -42,7 +42,8 @@
     "react": "^16.0.0",
     "react-dom": "^16.0.1",
     "react-redux": "^5.0.6",
-    "redux": "^3.7.2"
+    "redux": "^3.7.2",
+    "wms-client": "^3.0.1"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
@@ -62,7 +63,7 @@
     "react-test-renderer": "^16.0.0",
     "standard": "^10.0.3",
     "supertest": "^3.0.0",
-    "webpack": "^3.5.3",
+    "webpack": "^3.12.0",
     "webpack-dev-server": "^3.11.0"
   },
   "jest": {

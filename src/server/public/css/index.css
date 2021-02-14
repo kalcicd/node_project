@@ -1,39 +1,46 @@
 #searchBarWrapper {
-    margin-top: 6rem;
-    margin-bottom: 12rem;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    background-color: #e8e8e8;
-    border: 2px solid #888888;
-    border-radius: 3rem;
+  margin-top: 6rem;
+  margin-bottom: 12rem;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #e8e8e8;
+  border: 2px solid #888888;
+  border-radius: 3rem;
 }
 
 #searchIcon, #searchBar {
-    margin: 1rem;
+  margin: 1rem;
+}
+
+#searchButton{
+  border: none;
+  background-color: rgba(0,0,0,0);
+  cursor: pointer;
 }
 
 #searchIcon {
-    height: 4rem;
-    width: 4rem;
-    color: #888888;
+  height: 4rem;
+  width: 4rem;
+  color: #888888;
 }
 
 #searchBar {
-    color: #3a3a3a;
-    height: 3.5rem;
-    border: none;
-    font-size: 1.7rem;
-    background-color: inherit;
+  color: #3a3a3a;
+  height: 3.5rem;
+  border: none;
+  font-size: 1.7rem;
+  background-color: inherit;
 }
 
 #descriptionText {
-    font-size: 1.3rem;
-    line-height: 2.1rem;
-    font-family: sans-serif;
-    font-weight: bold;
+  font-size: 1.3rem;
+  line-height: 2.1rem;
+  font-family: sans-serif;
+  font-weight: bold;
 }
 
 #descriptionText > p {
-    text-align: center;
+  text-align: center;
 }
