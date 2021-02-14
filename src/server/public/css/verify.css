@@ -1,0 +1,95 @@
+.hidden{
+	display: none !important;
+}
+button{
+	border: 1px solid black;
+	border-radius: 0.1rem;
+	font-size: 1rem;
+	background-color: rgba(0,0,0,0.3);
+}
+
+#verifierColumn{
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.submission{
+	border: 1px solid black;
+	border-radius: 3px;
+	width: calc(100% - 16px);
+	margin: 10px auto;
+	display: flex;
+	flex-direction: column;
+	padding: 5px;
+}
+
+.submissionHeader{
+	width: 100%;
+	font-size: 1.5rem;
+	text-decoration: underline;
+	font-weight: bold;
+	text-align: center;
+}
+.submissionLinkWrapper{
+	width: 100%;
+	text-align: center;
+}
+.submissionLink{
+	color: #000088;
+	cursor: pointer;
+}
+.submissionShowHideButton{
+	margin: 0 auto;
+}
+
+.submissionBody{
+	width: 100%;
+}
+.submissionUpdateTable{
+	width: max-content;
+	border-collapse: collapse;
+	border: 1px solid black;
+	margin: 5px auto;
+}
+.submissionUpdateTableHeaderRow{
+	background-color: rgba(0,0,0,0.2);
+}
+.submissionUpdateTableRow>td,.submissionUpdateTableHeaderRow>td{
+	padding-left: 5px;
+}
+
+.submissionAcceptOrRejectButtons{
+	min-width: 60%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	flex-wrap: wrap;
+}
+.submissionAcceptOrRejectButtons>button{
+	flex-shrink: 0;
+}
+
+.submissionRejectWrapper{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.submissionRejectHeader{
+	font-size: 1.2rem;
+	text-align: center;
+}
+.submissionRejectReasonRadioButtons{
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-around;
+	width: 100%;
+}
+.submissionRejectReasonLabel{
+	font-size: 1rem;
+}
+.submissionRejectReasonTextArea{
+	min-width: 60%;
+	margin: 5px auto 5px auto;
+}
