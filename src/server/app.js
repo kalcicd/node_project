@@ -236,7 +236,7 @@ app.get('/search', (req, res, next) => {
 	var wmsclient = require("wms-client");
 	
 	//Create a wms client at server url
-	var url = "http://192.168.1.108/cgi-bin/qgis_mapserv.fcgi";
+	var url = "http://73.11.11.122/cgi-bin/qgis_mapserv.fcgi";
 	var wms = wmsclient(url);
 	
 	//Set Location to query (bbox based on latitude and longitude input)
