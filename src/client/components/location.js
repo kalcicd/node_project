@@ -71,9 +71,11 @@ export default function Location (props) {
 		console.log(results);		
 	} );
 	
+  let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
+  let is_verifier = (props.is_verifier!=undefined)?props.is_verifier:false;
   return (
     <div id="app">
-      <Title/>
+      <Title logged_in={logged_in} is_verifier={is_verifier}/>
       <div id="mainColumn">
         <div id="searchBarWrapper">
           <a href='/location'>

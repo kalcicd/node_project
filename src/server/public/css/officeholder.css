@@ -1,0 +1,60 @@
+#searchBarWrapper {
+    margin-top: 6rem;
+    margin-bottom: 12rem;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    background-color: #e8e8e8;
+    border: 2px solid #888888;
+    border-radius: 3rem;
+}
+#resultsTitle {
+    color: inherit;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: x-large;
+    text-align: center;
+}
+
+#mapContent {
+    align-content: center;
+}
+
+#searchIcon, #searchBar {
+    margin: 1rem;
+}
+
+#searchIcon {
+    height: 4rem;
+    width: 4rem;
+    color: #888888;
+}
+
+#searchBar {
+    color: #3a3a3a;
+    height: 3.5rem;
+    border: none;
+    font-size: 1.7rem;
+    background-color: inherit;
+}
+
+#descriptionText {
+    font-size: 1.3rem;
+    line-height: 2.1rem;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+#descriptionText > p {
+    text-align: center;
+}
+
+#locationResults > h3 {
+    color: #3a3a3a;
+}
+
+#mapsPhoto {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}

@@ -1,0 +1,6 @@
+{
+  "geocoding": {
+    "apiUrl": "https://maps.googleapis.com/maps/api/geocode/json",
+    "apiKey": "KEY HERE"
+  }
+}
