@@ -65,6 +65,7 @@ app.get('/', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/index.css')
   res.status(200).send(page)
 })
+
 app.get('/about', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
@@ -74,6 +75,7 @@ app.get('/about', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/aboutus.css')
   res.status(200).send(page)
 })
+
 app.get('/volunteer', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
@@ -83,6 +85,7 @@ app.get('/volunteer', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css')
   res.status(200).send(page)
 })
+
 app.get('/developers', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
@@ -136,6 +139,7 @@ app.get('/login', (req, res, next) => {
   // page = page.replace('<!--SCRIPT-->','<script src="/js/verify.js" defer></script>');
   res.status(200).send(page)
 })
+
 // Handle user login submission
 app.post('/login', (req, res, next) => {
   // todo: fetch hash from database based on username
@@ -171,6 +175,7 @@ app.post('/login', (req, res, next) => {
     )
   }
 })
+
 // handle user logout
 app.get('/logout', (req, res, next) => {
   req.session.destroy(function (err) {
@@ -184,11 +189,11 @@ app.get('/logout', (req, res, next) => {
 
 // Generate Results page
 app.get('/location', (req, res, next) => {
-  const { lat, lon } = req.query
-  const renderedContent = renderToString(React.createElement(Location, { lat, lon }))
+  const { lat, lng } = req.query
+  const renderedContent = renderToString(React.createElement(Location, { lat, lng }))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
-  res.status(200).send(page)
+  return res.status(200).send(page)
 })
 
 app.get('/officeholder/:officeholderId', (req, res, next) => {
@@ -214,7 +219,7 @@ app.get('/officeholder/:officeholderId', (req, res, next) => {
 app.get('/search', (req, res, next) => {
   const address = req.query.q
   if (address === undefined) { // search query must be present for this endpoint or else we 404
-    res.redirect('/404')
+    return res.redirect('/404')
   }
   const geocodingConfig = config.geocoding
   axios.get(geocodingConfig.apiUrl, {
@@ -223,11 +228,13 @@ app.get('/search', (req, res, next) => {
       key: geocodingConfig.apiKey
     }
   }).then((response) => {
-    const topResult = response.data.results[0]
+    const results = response.data.results
+    if (results.length === 0) {
+      return res.redirect('/404') // eventually we want to have this redirect to a separate 'no results found' page.
+    }
+    const topResult = results[0]
     const { lat, lng } = topResult['geometry']['location']
-    console.log('lat: ', lat)
-    console.log('lng: ', lng)
-    res.status(200).send()
+    res.redirect(`/location?lat=${lat}lng=${lng}`)
   }).catch((error) => {
     console.error(error)
     res.status(500).send()
