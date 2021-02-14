@@ -1,3 +1,4 @@
+import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
 import express from 'express'
@@ -11,6 +12,8 @@ import Developers from '../client/components/developers'
 import Error404 from '../client/components/404'
 import Location from '../client/components/location'
 import Officeholder from '../client/components/officeholder'
+
+import config from '../../config/default.json'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -47,19 +50,13 @@ app.get('/developers', (req, res, next) => {
 // Generate Results page
 app.get('/location', (req, res, next) => {
   const { lat, lon } = req.query
-  // if we don't receive any latitude or longitude params in request, 404
-  // todo: finish implementing this after Geocode API is hooked up
-  // if (lat === undefined || lon === undefined) {
-  //   res.status(404).redirect('/404')
-  //   return
-  // }
   const renderedContent = renderToString(React.createElement(Location, {lat, lon}))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
   res.status(200).send(page)
 })
 
-app.get('/officeholder/:officeholderId', (req, res) => {
+app.get('/officeholder/:officeholderId', (req, res, next) => {
   const { officeholderId } = req.params
 
   // todo: query db with officeholder id to get officeholderProps. An example response from the db is hardcoded below
@@ -79,13 +76,37 @@ app.get('/officeholder/:officeholderId', (req, res) => {
   res.status(200).send(page)
 })
 
+app.get('/search', (req, res, next) => {
+  const address = req.query.q
+  if (address === undefined) { // search query must be present for this endpoint or else we 404
+    res.redirect('/404')
+  }
+  const geocodingConfig = config.geocoding
+  axios.get(geocodingConfig.apiUrl, {
+    params: {
+      address: address,
+      key: geocodingConfig.apiKey
+    }
+  }).then((response) => {
+    const topResult = response.data.results[0]
+    const { lat, lng } = topResult['geometry']['location']
+    console.log('lat: ', lat)
+    console.log('lng: ', lng)
+    res.status(200).send()
+  }).catch((error) => {
+    console.error(error)
+    res.status(500).send()
+  })
+})
+
 // 404 error handling
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
   const renderedContent = renderToString(<Error404 />)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/404.css')
   res.status(404).send(page)
 })
+
 // Opens a socket and listens for connections only if there is no parent module running the script.
 if (!module.parent) {
   app.listen(8080, () => {

@@ -1,6 +1,11 @@
 import React from 'react'
 import Title from './title'
 
+/**
+ * Template of the Officeholder information page. Displays officeTitle, officeholderName, termStart, termEnd,
+ * nextElectionDate, phone, email, and meetings from the props object.
+ * @param {Object} props
+ */
 export default function Officeholder (props) {
   return (
     <div id='app'>
