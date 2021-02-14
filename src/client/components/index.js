@@ -2,11 +2,11 @@ import React from 'react'
 import Title from './title'
 
 export default function Index (props) {
-  let logged_in = (props.logged_in !== undefined) ? props.logged_in : false
-  let is_verifier = (props.is_verifier !== undefined) ? props.is_verifier : false
+  let loggedIn = (props.logged_in !== undefined) ? props.logged_in : false
+  let isVerifier = (props.is_verifier !== undefined) ? props.is_verifier : false
   return (
     <div id='app'>
-      <Title logged_in={logged_in} is_verifier={is_verifier} />
+      <Title logged_in={loggedIn} is_verifier={isVerifier} />
       <div id='mainColumn'>
         <form action='/search' method='GET' id='searchBarWrapper'>
           <button type='submit'>
