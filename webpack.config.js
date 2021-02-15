@@ -15,16 +15,16 @@ const plugins = [
 
 module.exports = {
   devtool: 'eval-source-map',
-  entry: ['./src/client/components'],
+  entry: ['babel-polyfill', './src/client/components'],
   output: {
     filename: 'bundle.js',
     path: path.join(__dirname, 'dist')
   },
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.jsx?$/,
-        loaders: 'babel-loader',
+        rules: 'babel-loader',
         include: __dirname,
         exclude: /node_modules/
       }
