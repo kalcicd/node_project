@@ -1,3 +1,16 @@
+#loginErrorMessage{
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: -1rem;
+  font-size: 1.5rem;
+  animation: 0.75s errorFlash; 
+}
+@keyframes errorFlash{
+  0% {background-color:rgba(252,120,0,0)}
+  50% {background-color:rgba(252,120,0,0.6)}
+  100% {background-color:rgba(252,120,0,0)}
+}
+
 #userLoginForm{
 	display: flex;
 	flex-direction: column;
