@@ -5,33 +5,34 @@ import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 
-import Index from '../client/components/index'
 import AboutUs from '../client/components/aboutus'
-import Volunteer from '../client/components/volunteer'
 import Developers from '../client/components/developers'
 import Error404 from '../client/components/404'
+import Index from '../client/components/index'
 import Location from '../client/components/location'
 import Login from '../client/components/login'
-import Verify from '../client/components/verify'
+import NewAccount from '../client/components/newAccount'
 import Officeholder from '../client/components/officeholder'
+import Verify from '../client/components/verify'
+import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 
-const pathToTemplate = path.join(__dirname, './views/layout.html')
-const template = fs.readFileSync(pathToTemplate, 'utf8')
+const pathToTemplate = path.join(__dirname, './views/layout.html');
+const template = fs.readFileSync(pathToTemplate, 'utf8');
 
-const session = require('express-session')
+const session = require('express-session');
 
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
 const bcryptSaltRounds = 15
 
-const app = express()
+const app = express();
 // use body-parser to handle post requests
-const bodyParser = require('body-parser')
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-app.use(express.static('./src/server/public'))
+app.use(express.static('./src/server/public'));
 
 // setup session secret
 app.use(session({
@@ -39,7 +40,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {}
-}))
+}));
 
 function userLoginStatus (req) {
   // extracts the relevant user data from the active session and returns it in a dict
@@ -57,48 +58,48 @@ function userLoginStatus (req) {
 }
 
 app.get('/', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
     <Index logged_in={userStatus.logged_in} is_verifier={userStatus.is_verifier} />
-  )
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/index.css')
-  res.status(200).send(page)
-})
+  );
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/index.css');
+  res.status(200).send(page);
+});
 app.get('/about', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
     <AboutUs logged_in={userStatus.logged_in} is_verifier={userStatus.is_verifier} />
-  )
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/aboutus.css')
-  res.status(200).send(page)
-})
+  );
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/aboutus.css');
+  res.status(200).send(page);
+});
 app.get('/volunteer', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
     <Volunteer logged_in={userStatus.logged_in} is_verifier={userStatus.is_verifier} />
-  )
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css')
-  res.status(200).send(page)
-})
+  );
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css');
+  res.status(200).send(page);
+});
 app.get('/developers', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
     <Developers logged_in={userStatus.logged_in} is_verifier={userStatus.is_verifier} />
-  )
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/developers.css')
-  res.status(200).send(page)
-})
+  );
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/developers.css');
+  res.status(200).send(page);
+});
 
 // show a selection of unverified submissions
 app.get('/verify', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   if (userStatus.is_verifier !== true) {
     // redirect the user back to the landing page if they are not a verifier
-    res.redirect(403, '/')
+    res.redirect(403, '/');
     return
   }
   // todo: fetch submissions from database
@@ -120,21 +121,35 @@ app.get('/verify', (req, res, next) => {
   ]
   const renderedContent = renderToString(<Verify
     submissions={submissions} logged_in={userStatus.logged_in} is_verifier={userStatus.is_verifier}
-  />)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/verify.css')
-  page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>')
-  res.status(200).send(page)
-})
+  />);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/verify.css');
+  page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>');
+  res.status(200).send(page);
+});
+
+//Create new account page
+app.get('/newAccount',(req,res,next)=>{
+  let userStatus = userLoginStatus(req);
+  if(userStatus.logged_in===true){
+    req.redirect(403,'/');  // redirect if the user is already logged in
+    return;
+  }
+  const renderedContent = renderToString(<NewAccount/>);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css');
+  //page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>');
+  res.status(200).send(page);
+});
 
 // User login page
 app.get('/login', (req, res, next) => {
-  const renderedContent = renderToString(<Login/>)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/login.css')
+  const renderedContent = renderToString(<Login/>);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/login.css');
   // page = page.replace('<!--SCRIPT-->','<script src="/js/verify.js" defer></script>');
-  res.status(200).send(page)
-})
+  res.status(200).send(page);
+});
 // Handle user login submission
 app.post('/login', (req, res, next) => {
   // todo: fetch hash from database based on username
@@ -146,9 +161,9 @@ app.post('/login', (req, res, next) => {
 
   // function to be called if the user's credentials are rejected
   function loginFailed () {
-    const renderedContent = renderToString(<Login loginFailed={true}/>)
-    let page = template.replace('<!-- CONTENT -->', renderedContent)
-    page = page.replace('<!-- STYLESHEET -->', '/css/login.css')
+    const renderedContent = renderToString(<Login loginFailed={true}/>);
+    let page = template.replace('<!-- CONTENT -->', renderedContent);
+    page = page.replace('<!-- STYLESHEET -->', '/css/login.css');
 	 res.status(403).send(page);
   }
 
@@ -170,31 +185,31 @@ app.post('/login', (req, res, next) => {
           res.status(500).send('A server error occurred, please try again');
         }
       }
-    )
+    );
   }
   else{ // user does not exist
     loginFailed();
   }
-})
+});
 // handle user logout
 app.get('/logout', (req, res, next) => {
   req.session.destroy(function (err) {
     if (!err) { // no errors occurred
-      res.redirect(302, '/')
+      res.redirect(302, '/');
     } else { // an error occurred while trying to logout
-      res.redirect(302, '/?logoutFailed=true')
+      res.redirect(302, '/?logoutFailed=true');
     }
-  })
-})
+  });
+});
 
 // Generate Results page
 app.get('/location', (req, res, next) => {
   const { lat, lon } = req.query
-  const renderedContent = renderToString(React.createElement(Location, { lat, lon }))
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
-  res.status(200).send(page)
-})
+  const renderedContent = renderToString(React.createElement(Location, { lat, lon }));
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/location.css');
+  res.status(200).send(page);
+});
 
 app.get('/officeholder/:officeholderId', (req, res, next) => {
   const { officeholderId } = req.params
@@ -210,16 +225,16 @@ app.get('/officeholder/:officeholderId', (req, res, next) => {
     email: 'joe.berney@lanecounty-or.gov',
     meetings: 'Every Monday at 9am at Lance county Courthouse, Eugene, Oregon'
   }
-  const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps))
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css')
-  res.status(200).send(page)
-})
+  const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps));
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css');
+  res.status(200).send(page);
+});
 
 app.get('/search', (req, res, next) => {
   const address = req.query.q
   if (address === undefined) { // search query must be present for this endpoint or else we 404
-    res.redirect('/404')
+    res.redirect('/404');
   }
   const geocodingConfig = config.geocoding
   axios.get(geocodingConfig.apiUrl, {
@@ -230,8 +245,8 @@ app.get('/search', (req, res, next) => {
   }).then((response) => {
     const topResult = response.data.results[0]
     const { lat, lng } = topResult['geometry']['location']
-    console.log('lat: ', lat)
-    console.log('lng: ', lng)
+    console.log('lat: ', lat);
+    console.log('lng: ', lng);
 	
 	/*
 	Send request based on lat and lng
@@ -244,7 +259,7 @@ app.get('/search', (req, res, next) => {
 	var url = "http://73.11.11.122/cgi-bin/qgis_mapserv.fcgi";
 	var wms = wmsclient(url);
 	
-	//Set Location to query (bbox based on latitude and longitude input)
+	//Set Location to query (bbox based on latitude and longitude input);
 	var bboxvar = '' + (lat-0.01) + ',' + (lng-0.01) + ',' + (lat+0.01) + ',' + (lng+0.01);
 	
 	//Set Query Options
@@ -303,26 +318,26 @@ app.get('/search', (req, res, next) => {
 	} );
 	
 	
-    res.status(200).send()
+    res.status(200).send();
   }).catch((error) => {
-    console.error(error)
-    res.status(500).send()
-  })
-})
+    console.error(error);
+    res.status(500).send();
+  });
+});
 
 // 404 error handling
 app.use((req, res, next) => {
-  const renderedContent = renderToString(<Error404 />)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/404.css')
-  res.status(404).send(page)
-})
+  const renderedContent = renderToString(<Error404 />);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/404.css');
+  res.status(404).send(page);
+});
 
 // Opens a socket and listens for connections only if there is no parent module running the script.
 if (!module.parent) {
   app.listen(8080, () => {
-    console.log('Server started on port 8080...')
-  })
+    console.log('Server started on port 8080...');
+  });
 }
 
 export default app

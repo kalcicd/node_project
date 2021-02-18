@@ -28,6 +28,7 @@ export function HeaderBar (props) {
     titleLinks.push(["Log Out","/logout"]);
   }
   else{
+    titleLinks.push(["Create Account","/newAccount"]);
   	 titleLinks.push(["Log In","/login"]);
   }
   const titleElems = []
