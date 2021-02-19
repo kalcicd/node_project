@@ -3,10 +3,10 @@ import Title from './title'
 
 export default function Volunteer (props) {
   let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
-  let is_verifier = (props.is_verifier!=undefined)?props.is_verifier:false;
+  let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
   return (
     <div id="app">
-      <Title logged_in={logged_in} is_verifier={is_verifier}/>
+      <Title logged_in={logged_in} isVerifier={isVerifier}/>
       <div id="mainColumn">
         <div id="sectionHeader">Volunteer Sign Up</div>
         <form action="/signup" method="POST" id="signUpForm">
