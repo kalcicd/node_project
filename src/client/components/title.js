@@ -20,7 +20,6 @@ export function HeaderBar (props) {
     ['Volunteer', '/volunteer'],
     ['Developers', '/developers']
   ]
-<<<<<<< HEAD
   //check if the user is logged in and if they are a verifier
   if(props.hasOwnProperty("logged_in") && props.logged_in===true){
     if(props.hasOwnProperty("isVerifier") && props.isVerifier===true){

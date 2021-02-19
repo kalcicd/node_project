@@ -2,7 +2,6 @@ import React from 'react'
 import Title from './title'
 
 export default function AboutUs (props) {
-<<<<<<< HEAD
   let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
   let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
   return (
