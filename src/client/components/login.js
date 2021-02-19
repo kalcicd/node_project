@@ -1,10 +1,10 @@
 import React from 'react'
 import Title from './title'
 
-export default class Login extends React.Component{
-  constructor(props){
-    super(props);
-    this.props = props;
+export default class Login extends React.Component {
+  constructor (props) {
+    super(props)
+    this.props = props
   }
 
   render(){
@@ -20,13 +20,13 @@ export default class Login extends React.Component{
           <form id="userLoginForm" method="POST" action="/login">
             <label className="formLabel">
               Username
-              <input type="text" name="user"></input>
+              <input type='text' name='user' />
             </label>
-            <label className="formLabel">
+            <label className='formLabel'>
               Password
-              <input type="password" name="pass"></input>
+              <input type='password' name='pass' />
             </label>
-            <button type="submit" id="loginButton">
+            <button type='submit' id='loginButton'>
               Login
             </button>
           </form>

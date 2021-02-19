@@ -17,6 +17,7 @@ import Verify from '../client/components/verify'
 import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
+import { gisLocationQuery } from './gis'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html');
 const template = fs.readFileSync(pathToTemplate, 'utf8');
@@ -50,7 +51,7 @@ app.use(session({
   cookie: {}
 }));
 
-function userLoginStatus (req) {
+const userLoginStatus = (req) => {
   // extracts the relevant user data from the active session and returns it in a dict
   let statusDict = { 'logged_in': false, 'isVerifier': false }
   if (req.session === undefined || req.session.user === undefined) {
@@ -74,6 +75,7 @@ app.get('/', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/index.css');
   res.status(200).send(page);
 });
+
 app.get('/about', (req, res, next) => {
   let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
@@ -92,6 +94,7 @@ app.get('/volunteer', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css');
   res.status(200).send(page);
 });
+
 app.get('/developers', (req, res, next) => {
   let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
@@ -158,6 +161,7 @@ app.get('/login', (req, res, next) => {
   // page = page.replace('<!--SCRIPT-->','<script src="/js/verify.js" defer></script>');
   res.status(200).send(page);
 });
+
 // Handle user login submission
 app.post('/login', async (req, res, next) => {
   // todo: fetch hash from database based on username
@@ -203,6 +207,7 @@ app.post('/login', async (req, res, next) => {
     loginFailed();
   }
 });
+
 // handle user logout
 app.get('/logout', (req, res, next) => {
   req.session.destroy(function (err) {
@@ -215,13 +220,24 @@ app.get('/logout', (req, res, next) => {
 });
 
 // Generate Results page
-app.get('/location', (req, res, next) => {
-  const { lat, lon } = req.query
-  const renderedContent = renderToString(React.createElement(Location, { lat, lon }));
-  let page = template.replace('<!-- CONTENT -->', renderedContent);
-  page = page.replace('<!-- STYLESHEET -->', '/css/location.css');
-  res.status(200).send(page);
-});
+app.get('/location', async (req, res, next) => {
+  const { lat, lng } = req.query
+  console.log('lat = ', lat)
+  console.log('lng = ', lng)
+  if (lat === undefined || lng === undefined) {
+    return res.redirect('/404')
+  }
+  const gisResponse = await gisLocationQuery(lat, lng).catch((err) => {
+    console.error(err)
+    return res.status(500).send('500')
+  })
+  console.log(gisResponse)
+
+  const renderedContent = renderToString(React.createElement(Location, { lat, lng }))
+  let page = template.replace('<!-- CONTENT -->', renderedContent)
+  page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
+  return res.status(200).send(page)
+})
 
 app.get('/officeholder/:officeholderId', (req, res, next) => {
   const { officeholderId } = req.params
@@ -246,7 +262,7 @@ app.get('/officeholder/:officeholderId', (req, res, next) => {
 app.get('/search', (req, res, next) => {
   const address = req.query.q
   if (address === undefined) { // search query must be present for this endpoint or else we 404
-    res.redirect('/404');
+    return res.redirect('/404');
   }
   const geocodingConfig = config.geocoding
   axios.get(geocodingConfig.apiUrl, {
@@ -255,82 +271,13 @@ app.get('/search', (req, res, next) => {
       key: geocodingConfig.apiKey
     }
   }).then((response) => {
-    const topResult = response.data.results[0]
+    const results = response.data.results
+    if (results.length === 0) {
+      return res.redirect('/404') // eventually we want to have this redirect to a separate 'no results found' page.
+    }
+    const topResult = results[0]
     const { lat, lng } = topResult['geometry']['location']
-    console.log('lat: ', lat);
-    console.log('lng: ', lng);
-	
-	/*
-	Send request based on lat and lng
-	*/
-	
-	//Import the wms client
-	var wmsclient = require("wms-client");
-	
-	//Create a wms client at server url
-	var url = "http://73.11.11.122/cgi-bin/qgis_mapserv.fcgi";
-	var wms = wmsclient(url);
-	
-	//Set Location to query (bbox based on latitude and longitude input);
-	var bboxvar = '' + (lat-0.01) + ',' + (lng-0.01) + ',' + (lat+0.01) + ',' + (lng+0.01);
-	
-	//Set Query Options
-	var queryOptions = {
-		service: 'WMS',
-		version: '1.3.0',
-		layers: 'ORStateHouse,ORStateSenate,ORSchoolDistricts,USHouse',
-		crs: 'EPSG:4269',
-		width: 1024,
-		height: 1024,
-		bbox: bboxvar,
-		map: '/home/qgis/projects/node.qgs'
-	}
-	var xy = {
-		x: 512,
-		y: 512
-	}	
-	
-	//Make Feature Info Request
-	wms.getFeatureInfo( xy, queryOptions, function( err, response ) {
-		//Display error if received
-		if ( err ) {
-			console.log(err);
-		}
-		
-		//Get array of responses
-		var responseList = response['wfs%3afeaturecollection']['gml%3afeaturemember'];
-		
-		//Set up results object
-		var results = {
-			USHouse: null,
-			StateSenate: null,
-			StateHouse: null,
-			SchoolDistrict: null};
-		
-		//Parse response list into results object
-		var i,r;
-		for(i = 0; i < responseList.length; i++){
-			r = responseList[i];
-			if(r['qgs%3aushouse']){
-				results.USHouse = r['qgs%3aushouse']['qgs%3anamelsad'];
-			}
-			if(r['qgs%3aorstatesenate']){
-				results.StateSenate = r['qgs%3aorstatesenate']['qgs%3anamelsad'];
-			}
-			if(r['qgs%3aorstatehouse']){
-				results.StateHouse = r['qgs%3aorstatehouse']['qgs%3anamelsad'];
-			}
-			if(r['qgs%3aorschooldistricts']){
-				results.SchoolDistrict = r['qgs%3aorschooldistricts']['qgs%3aname'];
-			}
-		}
-		//Debug results
-		console.log('Location Search Results:');
-		console.log(results);		
-	} );
-	
-	
-    res.status(200).send();
+    res.redirect(`/location?lat=${lat}&lng=${lng}`)
   }).catch((error) => {
     console.error(error);
     res.status(500).send();
