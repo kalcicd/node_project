@@ -8,8 +8,7 @@
   },
   "postgresql":{
     "address": "DATABASE ADDRESS",
-	 "database": "DATABASE NAME",
-	 "user": "DATABASE USERNAME",
-	 "pass": "DATABASE PASSWORD"
+    "user": "DATABASE USERNAME",
+    "pass": "DATABASE PASSWORD"
   }
 }

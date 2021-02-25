@@ -5,9 +5,11 @@ import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 
+import AccountCreated from '../client/components/accountCreated'
 import AboutUs from '../client/components/aboutus'
 import Developers from '../client/components/developers'
 import Error404 from '../client/components/404'
+import GeneralError from '../client/components/generalError'
 import Index from '../client/components/index'
 import Location from '../client/components/location'
 import Login from '../client/components/login'
@@ -25,12 +27,11 @@ const template = fs.readFileSync(pathToTemplate, 'utf8');
 const session = require('express-session');
 //bcrypt for password hashing
 const bcrypt = require('bcrypt');
-const bcryptSaltRounds = 15
+const bcryptSaltRounds = 15;
 //pg for database connection
 const { Pool } = require('pg');
-const database = new Pool({
+const databasePool = new Pool({
   host: config.postgresql.address,
-  database: config.postgresql.database,
   user: config.postgresql.user,
   password: config.postgresql.pass
 });
@@ -149,8 +150,114 @@ app.get('/newAccount',(req,res,next)=>{
   const renderedContent = renderToString(<NewAccount/>);
   let page = template.replace('<!-- CONTENT -->', renderedContent);
   page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css');
-  //page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>');
   res.status(200).send(page);
+});
+// Handle new account creation
+app.post('/newAccount', async (req,res,next)=>{
+  function accountCreationFailed(reason){
+    const renderedContent = renderToString(<NewAccount hasError={true} errorReason={reason}/>);
+    let page = template.replace('<!-- CONTENT -->', renderedContent);
+    page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css');
+    res.status(400).send(page);
+  }
+  //check that all required fields were passed
+  let hasRequiredFields = true;
+  hasRequiredFields = hasRequiredFields && (req.body.username!==undefined && req.body.username!=="");
+  hasRequiredFields = hasRequiredFields && (req.body.email!==undefined && req.body.email!=="");
+  hasRequiredFields = hasRequiredFields && (req.body.pass!==undefined && req.body.pass!=="");
+  hasRequiredFields = hasRequiredFields && (req.body.pass2!==undefined && req.body.pass2!=="");
+  if(!hasRequiredFields){
+    accountCreationFailed("Not all required fields were filled");
+    return;
+  }
+  //check username is unique
+  let existingUser = await databasePool.query(
+    "SELECT * FROM Users WHERE username=$1",[req.body.username]
+  );
+  if(existingUser.rows.length>0){
+    accountCreationFailed("The username is already taken");
+    return;
+  }
+  //check that the password and confirm password field match
+  if(req.body.pass !== req.body.pass2){
+    accountCreationFailed("The password and confirm password fields do not match");
+    return;
+  }
+  //hash password for storage in the database
+  bcrypt.hash(req.body.pass, bcryptSaltRounds, (err,hash) => {
+    if(err){ //show an error page to the user if hashing the password failed
+      //todo: log error output to console or file
+      const renderedContent = renderToString(<GeneralError errorHeader="500 Internal Server Error" errorMessage="An error occurred while creating the user, please try again or contact an administrator if the problem persists"/>);
+      let page = template.replace("<!-- CONTENT -->",renderedContent);
+      res.status(500).send(page);
+      return;
+    }
+    else{
+      /*
+        newUserQuery is a string which is passed to the databasePool.query function
+        newUserData is a list which contains the data associated with the query in the order specified
+        in newUserQuery
+      */
+      let newUserQuery = "INSERT INTO Users (username,email,passwd";
+      let newUserData = [req.body.username, req.body.email,hash];
+      if(req.body.name !== ""){ //check if the Name field was filled
+        newUserQuery += ",name";
+        newUserData.push(req.body.name);
+      }
+      if(req.body.phone !== ""){ //check if the Phone Number field was filled
+        newUserQuery += ",phone";
+        //reduce the phone number to only decimal digits
+        let reducedPhoneNumber = String(req.body.phone).replace(/[^0-9]/g,"");
+        newUserData.push(reducedPhoneNumber);
+      }
+      if(req.body.address !== "" || req.body.city !== "" || req.body.zip !== ""){
+        if(req.body.address==="" || req.body.city==="" || req.body.state===undefined || req.body.zip===""){
+          //send an error that only part of the address was filled out
+          const errorContent = renderToString(<NewAccount hasError={true} errorMessage="Only some of the address fields were filled out, please either fill out all of the fields or leave them all blank" />);
+          let page = template.replace("<!-- CONTENT -->",errorContent);
+          page = page.replace("<!-- STYLESHEET -->","/css/newAccount.css");
+          res.status(400).send(page);
+        }
+        newUserQuery += ",addressline1,addresscity,addressstate,addresszip";
+        newUserData.push(req.body.address);
+        newUserData.push(req.body.city);
+        newUserData.push(req.body.state);
+        newUserData.push(req.body.zip);
+        if(req.body.address2 !== ""){
+          newUserQuery += ",addressline2";
+          newUserData += newUserData.push(req.body,address2);
+        }
+      }
+      //finish query string with formatting indicators ($1,$2,etc.)
+      newUserQuery += ") VALUES ($1,$2,$3";
+      for(let i=3; i<newUserData.length; i++){
+        newUserQuery += ",$"+String(i+1);
+      }
+      newUserQuery += ");"
+      //add the new user to the database
+      databasePool.query(newUserQuery, newUserData, (err,queryRes)=>{
+        if(err){ //an error occurred while inserting the values into the database
+          //log the error
+          console.log("An error occurred while adding a user to the database:");
+          console.log("\tQuery:"+newUserQuery);
+          console.log("\tData:"+String(newUserData));
+          console.log("\tError:"+err);
+          //send an error message
+          const errorContent = renderToString(<NewAccount hasError={true} errorMessage="A server error occurred, please try again" />);
+          let page = template.replace("<!-- CONTENT -->",errorContent);
+          page = page.replace("<!-- STYLESHEET -->","/css/newAccount.css");
+          res.status(500).send(page);
+        }
+        else{
+          //send success page
+          const renderedContent = renderToString(<AccountCreated />);
+          let page = template.replace('<!-- CONTENT -->', renderedContent);
+          page = page.replace("<!-- STYLESHEET -->","/css/accountCreated.css");
+          res.status(200).send(page);
+        }
+      });
+    }
+  });
 });
 
 // User login page
@@ -164,13 +271,6 @@ app.get('/login', (req, res, next) => {
 
 // Handle user login submission
 app.post('/login', async (req, res, next) => {
-  // todo: fetch hash from database based on username
-  // temporary credentials: username: user (or user2), password: password
-  const temporaryUsersTable = {
-    'user': { password: '$2b$15$XilY7gUBSvL7l4Yh5uFXkuwYXTV4u9ikB0OvKRxqq5fNWrpi17VTS', isVerifier: true },
-    'user2': { password: '$2b$15$XilY7gUBSvL7l4Yh5uFXkuwYXTV4u9ikB0OvKRxqq5fNWrpi17VTS', isVerifier: false }
-  }
-
   // function to be called if the user's credentials are rejected
   function loginFailed () {
     const renderedContent = renderToString(<Login loginFailed={true}/>);
@@ -181,18 +281,19 @@ app.post('/login', async (req, res, next) => {
 
   let username = req.body.user;
   //todo: sanitize username
+  //probably would be better to use a callback here incase of an error
   //find user in database
-  const { user } = await database.query("SELECT * FROM Users WHERE username=''",[username]);
-  console.log(rows);
-  if (temporaryUsersTable.hasOwnProperty(username)) {
+  const userRes = await databasePool.query("SELECT * FROM Users WHERE username=$1",[username]);
+  if(userRes.rows.length>0 && userRes.rows[0].username===username){
+    // the user was found in the database, compare the passwords
     bcrypt.compare(
       req.body.pass,
-      temporaryUsersTable[username].password,
+      userRes.rows[0].passwd,
       function (err, result) {
         if (err === undefined) { // no errors occurred
           if (result) { // login was successful
             req.session.user = username;
-            req.session.isVerifier = temporaryUsersTable[username].isVerifier;
+            req.session.isVerifier = userRes.rows[0].isVerifier;
             res.redirect('/');
           } else { // login failed
             loginFailed();
