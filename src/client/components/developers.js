@@ -3,29 +3,29 @@ import Title from './title'
 
 export default function Developers (props) {
   let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
-  let is_verifier = (props.is_verifier!=undefined)?props.is_verifier:false;
+  let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
   return (
     <div id="app">
-      <Title logged_in={logged_in} is_verifier={is_verifier}/>
+      <Title logged_in={logged_in} isVerifier={isVerifier}/>
       <div id="mainColumn">
         <div id="sectionHeader">Developers</div>
         <p className="mainColumnText">
           Interested in using our data for your own awesome civic tech project?
         </p>
-        <p className="mainColumnText">
+        <p className='mainColumnText'>
           Awesome!
         </p>
-        <a href="https://mit-license.org/" className="mainColumnText">
+        <a href='https://mit-license.org/' className='mainColumnText'>
           All of our data is available under the open source MIT License - details to be found here
         </a>
-        <form action="/download" method="GET" id="downloadForm">
-          <div className="selectLabel">Select State:</div>
-          <StateSelect class="formSelect"/>
-          <div className="selectLabel">Select Layer of Government:</div>
-          <LevelSelect class="formSelect"/>
-          <div className="selectLabel">Shapefiles Included:</div>
-          <ShapefileSelect class="formSelect"/>
-          <button type="submit" id="submitButton">Submit</button>
+        <form action='/download' method='GET' id='downloadForm'>
+          <div className='selectLabel'>Select State:</div>
+          <StateSelect class='formSelect' />
+          <div className='selectLabel'>Select Layer of Government:</div>
+          <LevelSelect class='formSelect' />
+          <div className='selectLabel'>Shapefiles Included:</div>
+          <ShapefileSelect class='formSelect' />
+          <button type='submit' id='submitButton'>Submit</button>
         </form>
       </div>
     </div>
@@ -39,7 +39,7 @@ export function StateSelect (props) {
     options.push(<option value={elem.toLowerCase()} key={i}>{elem}</option>)
   })
   return (
-    <select className={props.class} name="state">{options}</select>
+    <select className={props.class} name='state'>{options}</select>
   )
 }
 
@@ -50,7 +50,7 @@ export function LevelSelect (props) {
     options.push(<option value={elem.toLowerCase()} key={i}>{elem}</option>)
   })
   return (
-    <select className={props.class} name="level">{options}</select>
+    <select className={props.class} name='level'>{options}</select>
   )
 }
 
@@ -61,6 +61,6 @@ export function ShapefileSelect (props) {
     options.push(<option value={elem.toLowerCase()} key={i}>{elem}</option>)
   })
   return (
-    <select className={props.class} name="shapefiles">{options}</select>
+    <select className={props.class} name='shapefiles'>{options}</select>
   )
 }

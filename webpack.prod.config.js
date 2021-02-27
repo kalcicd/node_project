@@ -12,11 +12,13 @@ config.externals = {
 config.devtool = 'cheap-source-map'
 
 config.plugins.push(new UglifyJSPlugin({
-  sourceMap: true,
-  compressor: {
-    warnings: false
-  },
-  comments: false
-}))
+  uglifyOptions: {
+    sourceMap: true,
+    compressor: {
+      warnings: false
+    },
+    comments: false
+  }
+}));
 
 module.exports = config

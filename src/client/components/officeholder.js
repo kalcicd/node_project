@@ -9,16 +9,16 @@ import Title from './title'
 export default function Officeholder (props) {
   return (
     <div id='app'>
-      <Title/>
+      <Title />
       <div id='mainColumn'>
         <div id='searchBarWrapper'>
           <a href='/location'>
-            <img src='/icons/search.svg' id='searchIcon'/>
+            <img src='/icons/search.svg' id='searchIcon' />
           </a>
           <input
             type='text' id='searchBar'
             className='flexGrow'
-            placeholder='Enter address for officeholders, contact information, and meetings'/>
+            placeholder='Enter address for officeholders, contact information, and meetings' />
         </div>
         <div id='resultsTitle'>
           <h2>{props.officeTitle} {props.officeholderName}'s Information:</h2>
@@ -53,7 +53,7 @@ export default function Officeholder (props) {
         <div id='resultsTitle'>
           <h2>District Map</h2>
         </div>
-        <img src='/icons/mapsEmbed.png' id='mapsPhoto'/>
+        <img src='/icons/mapsEmbed.png' id='mapsPhoto' />
       </div>
       <div id='reportButton'>
         <button>Map information incorrect? Submit an info update request here.</button>
