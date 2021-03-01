@@ -27,27 +27,73 @@ export default function Location (props) {
       <div id='locationResults'>
         <h3>Federal</h3>
         <ul>
-          <li>President: Donald Trump</li>
+        {
+			props.federal.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
         </ul>
         <h3>State</h3>
         <ul>
-          <li>Governor: Kate Brown</li>
+		{
+			props.state.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
         </ul>
         <h3>County</h3>
         <ul>
-          <li>County Commissioner: Joe Berney</li>
+          {
+			props.county.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
         </ul>
         <h3>City</h3>
         <ul>
-          <li>Mayor: Biff Traber</li>
+          {
+			props.city.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
         </ul>
         <h3>School</h3>
         <ul>
-          <li>Superintendent: Ryan Noss</li>
+          {
+			props.school.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
         </ul>
         <h3>Local</h3>
         <ul>
-          <li>Utility Board Member: Jane Doe</li>
+          {
+			props.local.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
+        </ul>
+		<h3>Other</h3>
+        <ul>
+          {
+			props.other.map(loc =>
+				<li key={loc.id}>
+					{loc.title}: <a href={loc.id}>{loc.name}</a>
+				</li>
+			)
+		}
         </ul>
       </div>
     </div>

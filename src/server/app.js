@@ -322,19 +322,137 @@ app.get('/logout', (req, res, next) => {
 
 // Generate Results page
 app.get('/location', async (req, res, next) => {
+  //get latitude and longitude from the parameter info
   const { lat, lng } = req.query
   console.log('lat = ', lat)
   console.log('lng = ', lng)
   if (lat === undefined || lng === undefined) {
     return res.redirect('/404')
   }
+  //Get GIS identifiers for location
   const gisResponse = await gisLocationQuery(lat, lng).catch((err) => {
     console.error(err)
     return res.status(500).send('500')
   })
-  console.log(gisResponse)
+  console.log("GIS Response: " + gisResponse)
+  
+  //const GISIdentifiers = {'OR1', 'OR2'}; //Hard coded for now
+  
+  //Get info for GIT identifiers
+  const queryString = "SELECT a.GISIdentifier, c.Name, c.HolderId, d.TypeName, d.LevelNum FROM Location a, Offices b, OfficeHolders c, LocationType d WHERE c.HolderId = b.CurrentHolder AND b.LocationId = a.LocationId AND d.TypeId = a.TypeId"
+  
+  
+  
+  //const locationRes = await databasePool.query(queryString);
+   
+  //console.log(locationRes);
+  
+   
+  
+  const locationList = [
+  {
+	  Name: "Joe Biden",
+	  HolderId: "0114",
+	  TypeName: "President",
+	  LevelNum: 0
+  },
+  {
+	  Name: "Representative Randy",
+	  HolderId: "0123",
+	  TypeName: "State House",
+	  LevelNum: 1
+  },
+  {
+	  Name: "Senator Sally",
+	  HolderId: "0334",
+	  TypeName: "State Senate",
+	  LevelNum: 1
+  },
+  {
+	  Name: "Kate Brown",
+	  HolderId: "0888",
+	  TypeName: "Governor",
+	  LevelNum: 1
+  },
+  {
+	  Name: "Joe Berney",
+	  HolderId: "0145",
+	  TypeName: "County Commisioner",
+	  LevelNum: 2
+  },
+  {
+	  Name: "Biff Traber",
+	  HolderId: "0624",
+	  TypeName: "Mayor",
+	  LevelNum: 3
+  },
+  {
+	  Name: "Ryan Noss",
+	  HolderId: "0194",
+	  TypeName: "Superintendent",
+	  LevelNum: 4
+  },
+  {
+	  Name: "Jane Doe",
+	  HolderId: "3547",
+	  TypeName: "Utility Board Member",
+	  LevelNum: 5
+  }
+  ];
+  
+  
+  
+  const locationProps = {
+	  federal: [],
+	  state: [],
+	  county: [],
+	  city: [],
+	  school: [],
+	  local: [],
+	  other: []
+  }
+  
+	for(var i = 0; i < locationList.length; i++){
+		var loc = locationList[i];
+		//console.log(loc.LevelNum);
+		var prop;
+		switch(loc.LevelNum){
+			case 0:
+				prop = locationProps.federal;
+				break;
+			case 1:
+				prop = locationProps.state;
+				break;
+			case 2:
+				prop = locationProps.county;
+				break;
+			case 3:
+				prop = locationProps.city;
+				break;
+			case 4:
+				prop = locationProps.school;
+				break;
+			case 5:	
+				prop = locationProps.local;
+				break;
+			default:
+				prop = locationProps.other;
+				break;		  		  
+		}
+		prop.push({
+					title: loc.TypeName,
+					name: loc.Name,
+					id: "/officeholder/"+loc.HolderId
+					});
+	  
+  }
+  
+  //console.log(locationProps);
+  
+  
+  
 
-  const renderedContent = renderToString(React.createElement(Location, { lat, lng }))
+  const renderedContent = renderToString(React.createElement(Location, locationProps))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
   return res.status(200).send(page)
@@ -362,6 +480,8 @@ app.get('/officeholder/:officeholderId', (req, res, next) => {
 
 app.get('/search', (req, res, next) => {
   const address = req.query.q
+  console.log('searching');
+  console.log(address);
   if (address === undefined) { // search query must be present for this endpoint or else we 404
     return res.redirect('/404');
   }
@@ -374,8 +494,10 @@ app.get('/search', (req, res, next) => {
   }).then((response) => {
     const results = response.data.results
     if (results.length === 0) {
+		console.log('Geocoding api results returned nothing');
       return res.redirect('/404') // eventually we want to have this redirect to a separate 'no results found' page.
     }
+	console.log('Geocoding api results returned something');
     const topResult = results[0]
     const { lat, lng } = topResult['geometry']['location']
     res.redirect(`/location?lat=${lat}&lng=${lng}`)
