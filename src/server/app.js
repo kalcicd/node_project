@@ -226,7 +226,7 @@ app.post('/newAccount', async (req, res, next) => {
         newUserData.push(req.body.zip)
         if (req.body.address2 !== '') {
           newUserQuery += ',addressline2'
-          newUserData += newUserData.push(req.body, address2)
+          newUserData += newUserData.push(req.body.address2)
         }
       }
       // finish query string with formatting indicators ($1,$2,etc.)
@@ -276,7 +276,7 @@ app.post('/login', async (req, res, next) => {
     const renderedContent = renderToString(<Login loginFailed />)
     let page = template.replace('<!-- CONTENT -->', renderedContent)
     page = page.replace('<!-- STYLESHEET -->', '/css/login.css')
-	 res.status(403).send(page)
+    res.status(403).send(page)
   }
 
   let username = req.body.user
