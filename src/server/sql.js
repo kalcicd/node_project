@@ -7,27 +7,38 @@ const databasePool = new Pool({
   password: config.postgresql.pass
 })
 
-// Takes a table name, rowId, and an object containing the updates to be made. Constructs and sends an query to update the given fields
-const testTable = 'Officeholders'
-const testIdFieldName = 'HolderId'
-const rowId = '1'
-const testUpdates = {
-  'Name': 'Jane Doe',
-  'ContactEmail': 'test@gmail.com'
-}
-const updateField = (type, idFieldName, rowId, updates) => new Promise(async (resolve, reject) => {
+// Takes a type, rowId, and an object containing the updates to be made to a row in a table.
+// Constructs and sends an query to update the given fields
+const updateField = (type, rowId, updates) => new Promise(async (resolve, reject) => {
+  const tableDict = {
+    election: {
+      idName: 'electionid',
+      tableName: 'elections'
+    },
+    location: {
+      idName: 'locationid',
+      tableName: 'locations'
+    },
+    office: {
+      idName: 'officeid',
+      tableName: 'offices'
+    },
+    officeholder: {
+      idName: 'officeholderid',
+      tableName: 'officeholders'
+    }
+  }
   let updateStrings = []
   updates.forEach((field, newValue) => updateStrings.push(`${field}= ${newValue}`))
   const queryString = 'UPDATE $1 SET $2 WHERE $3 = $4'
-  const response = await databasePool.query(queryString, [type, updateStrings.join(', '), idFieldName, rowId])
-  response.catch((err) => {
-    reject(err)
-  }).then((sqlRes) => {
-    resolve(sqlRes)
-  })
+  const response = await databasePool.query(
+    queryString, [tableDict[type].tableName, updateStrings.join(', '), tableDict[type].idName, rowId]
+  ).catch((err) => reject(err))
+  console.log(response)
+  resolve(response)
 })
 
-// retrieves all entries from pending data tables to be displayed to verifier
+// Retrieves all entries from pending data tables to be displayed to verifier
 const getAllPending = () => new Promise(async (resolve, reject) => {
   let allPending = []
   const pendingElection = await databasePool.query('SELECT * FROM pendingelectionchanges').catch((err) => reject(err))

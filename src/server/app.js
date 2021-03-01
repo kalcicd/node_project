@@ -116,24 +116,25 @@ app.get('/verify', async (req, res, next) => {
     res.redirect(403, '/')
     return
   }
-  const submissions = await getAllPending().catch((err) => { res.status(500).send(err) })
+  // todo: need to retrieve current field value in addition to pending value
+  // const submissions = await getAllPending().catch((err) => { res.status(500).send(err) })
 
-  // let submissions = [ // temporary submissions list
-  //   {
-  //     'title': 'Corvalis',
-  //     'type': 'location',
-  //     'reference': 'https://en.wikipedia.org',
-  //     'id': 0,
-  //     'updates': [['Location', 'Corvalis', 'Corvallis']]
-  //   },
-  //   {
-  //     'title': 'Corvallis City Council Member',
-  //     'type': 'office',
-  //     'reference': 'https://en.wikipedia.org',
-  //     'id': 0,
-  //     'updates': [['OfficeTitle', 'City Council Member', 'City Councilor']]
-  //   }
-  // ]
+  let submissions = [ // temporary submissions list
+    {
+      'title': 'Corvalis',
+      'type': 'location',
+      'reference': 'https://en.wikipedia.org',
+      'id': 0,
+      'updates': [['Location', 'Corvalis', 'Corvallis']]
+    },
+    {
+      'title': 'Corvallis City Council Member',
+      'type': 'office',
+      'reference': 'https://en.wikipedia.org',
+      'id': 0,
+      'updates': [['OfficeTitle', 'City Council Member', 'City Councilor']]
+    }
+  ]
   const renderedContent = renderToString(<Verify
     submissions={submissions} logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier}
   />)
