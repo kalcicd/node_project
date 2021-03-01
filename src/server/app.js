@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import express from 'express'
 import React from 'react'
+import { Pool } from 'pg'
 import { renderToString } from 'react-dom/server'
 
 import AccountCreated from '../client/components/accountCreated'
@@ -20,6 +21,7 @@ import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 import { gisLocationQuery } from './gis'
+import { getAllPending, updateField } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html');
 const template = fs.readFileSync(pathToTemplate, 'utf8');
@@ -28,8 +30,7 @@ const session = require('express-session');
 //bcrypt for password hashing
 const bcrypt = require('bcrypt');
 const bcryptSaltRounds = 15;
-//pg for database connection
-const { Pool } = require('pg');
+
 const databasePool = new Pool({
   host: config.postgresql.address,
   user: config.postgresql.user,
@@ -86,6 +87,7 @@ app.get('/about', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/aboutus.css');
   res.status(200).send(page);
 });
+
 app.get('/volunteer', (req, res, next) => {
   let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
@@ -107,30 +109,31 @@ app.get('/developers', (req, res, next) => {
 });
 
 // show a selection of unverified submissions
-app.get('/verify', (req, res, next) => {
+app.get('/verify', async (req, res, next) => {
   let userStatus = userLoginStatus(req);
   if (userStatus.isVerifier !== true) {
     // redirect the user back to the landing page if they are not a verifier
     res.redirect(403, '/');
     return
   }
-  // todo: fetch submissions from database
-  let submissions = [ // temporary submissions list
-    {
-      'title': 'Corvalis',
-      'type': 'location',
-      'reference': 'https://en.wikipedia.org',
-      'id': 0,
-      'updates': [['Location', 'Corvalis', 'Corvallis']]
-    },
-    {
-      'title': 'Corvallis City Council Member',
-      'type': 'office',
-      'reference': 'https://en.wikipedia.org',
-      'id': 0,
-      'updates': [['OfficeTitle', 'City Council Member', 'City Councilor']]
-    }
-  ]
+  const submissions = await getAllPending().catch((err) => { res.status(500).send(err) })
+
+  // let submissions = [ // temporary submissions list
+  //   {
+  //     'title': 'Corvalis',
+  //     'type': 'location',
+  //     'reference': 'https://en.wikipedia.org',
+  //     'id': 0,
+  //     'updates': [['Location', 'Corvalis', 'Corvallis']]
+  //   },
+  //   {
+  //     'title': 'Corvallis City Council Member',
+  //     'type': 'office',
+  //     'reference': 'https://en.wikipedia.org',
+  //     'id': 0,
+  //     'updates': [['OfficeTitle', 'City Council Member', 'City Councilor']]
+  //   }
+  // ]
   const renderedContent = renderToString(<Verify
     submissions={submissions} logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier}
   />);
@@ -199,7 +202,7 @@ app.post('/newAccount', async (req,res,next)=>{
         in newUserQuery
       */
       let newUserQuery = "INSERT INTO Users (username,email,passwd";
-      let newUserData = [req.body.username, req.body.email,hash];
+      let newUserData = [req.body.username, req.body.email, hash];
       if(req.body.name !== ""){ //check if the Name field was filled
         newUserQuery += ",name";
         newUserData.push(req.body.name);
@@ -283,7 +286,10 @@ app.post('/login', async (req, res, next) => {
   //todo: sanitize username
   //probably would be better to use a callback here incase of an error
   //find user in database
-  const userRes = await databasePool.query("SELECT * FROM Users WHERE username=$1",[username]);
+  const userRes = await databasePool.query('SELECT * FROM Users WHERE username=$1', [username]).catch((err) => {
+    console.error(err)
+    return res.status(500).send('A server error occurred, please try again')
+  });
   if(userRes.rows.length>0 && userRes.rows[0].username===username){
     // the user was found in the database, compare the passwords
     bcrypt.compare(
@@ -293,7 +299,7 @@ app.post('/login', async (req, res, next) => {
         if (err === undefined) { // no errors occurred
           if (result) { // login was successful
             req.session.user = username;
-            req.session.isVerifier = userRes.rows[0].isVerifier;
+            req.session.isVerifier = userRes.rows[0]['isverifier'];
             res.redirect('/');
           } else { // login failed
             loginFailed();
@@ -319,6 +325,28 @@ app.get('/logout', (req, res, next) => {
     }
   });
 });
+
+// Handle acceptance of a submission
+app.post('/accept', async (req, res) => {
+  const { type, idFieldName, rowId, updates } = req.body
+  const userStatus = userLoginStatus(req)
+  if (userStatus.isVerifier) {
+    const response = await updateField(type, idFieldName, rowId, updates)
+    console.log(response)
+  } else {
+    res.status(403).send()
+  }
+})
+
+// Handle rejection of a submission
+app.post('/reject', async (req, res) => {
+  const userStatus = userLoginStatus(req)
+  if (userStatus.isVerifier) {
+    // todo: send email to user who submitted and remove pending info from table
+  } else {
+    res.status(403).send()
+  }
+})
 
 // Generate Results page
 app.get('/location', async (req, res, next) => {
