@@ -8,7 +8,7 @@ export default function Volunteer (props) {
     <div id="app">
       <Title logged_in={logged_in} isVerifier={isVerifier}/>
       <div id="mainColumn">
-        <div id="sectionHeader">Volunteer Sign Up</div>
+        <h2 className="pageHeader">Volunteer Sign Up</h2>
         <form action="/signup" method="POST" id="signUpForm">
           <div className="formInputRow">
             <label htmlFor="nameInput" className="formLabel">Name:</label>

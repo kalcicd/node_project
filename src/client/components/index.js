@@ -13,7 +13,7 @@ export default function Index (props) {
             <img src='/icons/search.svg' id='searchIcon' />
           </button>
           <input name='q' type='text' id='searchBar' className='flexGrow'
-            placeholder='Enter address for officeholders, contact information, and meetings' />
+            placeholder='Search by address' />
         </form>
         <div id='descriptionText'>
           <p>

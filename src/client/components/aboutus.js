@@ -8,7 +8,7 @@ export default function AboutUs (props) {
     <div id="app">
       <Title logged_in={logged_in} isVerifier={isVerifier}/>
       <div id="mainColumn">
-        <div id="sectionHeader">About Us</div>
+        <h2 className="pageHeader">About Us</h2>
         <p>
           This project was started with an OSU Capstone Project for CS 461. The inital developers
           were Davic Kalcic, Owen Haggerty, and Matt Kerr. The Project Managers were Emily
@@ -20,7 +20,8 @@ export default function AboutUs (props) {
           standardization was being duplicated for civic tech projects.
         </p>
         <p>
-          Questions? Comments? You can reach us at info@nodeproject.org
+          Questions? Comments? You can reach us at
+			 <a href="mailto:info@nodeproject.org"> info@nodeproject.org</a>
         </p>
       </div>
     </div>

@@ -1,13 +1,6 @@
 #mainColumn {
     text-align: center;
-    font-family: sans-serif;
     font-weight: bold;
-}
-
-#sectionHeader {
-    margin-top: 4rem;
-    margin-bottom: 2rem;
-    font-size: 1.9rem;
 }
 
 #mainColumn > p {
