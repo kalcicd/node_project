@@ -8,22 +8,20 @@ export default function Developers (props) {
     <div id="app">
       <Title logged_in={logged_in} isVerifier={isVerifier}/>
       <div id="mainColumn">
-        <div id="sectionHeader">Developers</div>
+        <h2 className="pageHeader">Developers</h2>
         <p className="mainColumnText">
-          Interested in using our data for your own awesome civic tech project?
+          Interested in using our data for your own awesome civic tech project? Awesome! All of our
+          data is available under the open source MIT License -<span> </span>
+          <a href='https://mit-license.org/'>
+            details to be found here
+          </a>
         </p>
-        <p className='mainColumnText'>
-          Awesome!
-        </p>
-        <a href='https://mit-license.org/' className='mainColumnText'>
-          All of our data is available under the open source MIT License - details to be found here
-        </a>
         <form action='/download' method='GET' id='downloadForm'>
-          <div className='selectLabel'>Select State:</div>
+          <div className='selectLabel'>State</div>
           <StateSelect class='formSelect' />
-          <div className='selectLabel'>Select Layer of Government:</div>
+          <div className='selectLabel'>Layer of Government</div>
           <LevelSelect class='formSelect' />
-          <div className='selectLabel'>Shapefiles Included:</div>
+          <div className='selectLabel'>Shapefiles Included</div>
           <ShapefileSelect class='formSelect' />
           <button type='submit' id='submitButton'>Submit</button>
         </form>

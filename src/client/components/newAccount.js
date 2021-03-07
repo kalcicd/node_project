@@ -27,7 +27,7 @@ export default class NewAccount extends React.Component{
       <div id="app">
         <Title />
         <div id="mainColumn">
-          <h2 id="header">Create Account</h2>
+          <h2 className="pageHeader">Create Account</h2>
           {headerError}
           <div id="headerMessage">
             Fields <span className="required">highlighted in blue</span> are required

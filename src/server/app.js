@@ -296,9 +296,9 @@ app.post('/login', async (req, res, next) => {
       function (err, result) {
         if (err === undefined) { // no errors occurred
           if (result) { // login was successful
-            req.session.user = username
-            req.session.isVerifier = userRes.rows[0]['isverifier']
-            res.redirect('/')
+            req.session.user = username;
+            req.session.isVerifier = userRes.rows[0].isverifier;
+            res.redirect('/');
           } else { // login failed
             loginFailed()
           }

@@ -16,7 +16,8 @@ export default class Login extends React.Component {
       <div id="app">
         <Title/>
         <div id="mainColumn">
-		    {message}
+          <h2 className="pageHeader">Log In</h2>
+		      {message}
           <form id="userLoginForm" method="POST" action="/login">
             <label className="formLabel">
               Username
