@@ -17,24 +17,23 @@ export default function Title (props) {
 
 export function HeaderBar (props) {
   const titleLinks = [
-    ['About Us', '/about'],
-    //['Volunteer', '/volunteer'],
-    ['Developers', '/developers']
+    {'name':'About Us', 'url':'/about'},
+    {'name':'Developers', 'url':'/developers'}
   ]
   //check if the user is logged in and if they are a verifier
   if(props.hasOwnProperty("logged_in") && props.logged_in===true){
     if(props.hasOwnProperty("isVerifier") && props.isVerifier===true){
-	   titleLinks.push(["Verify Submissions","/verify"]);
+	   titleLinks.push({'name':"Verify Submissions",'url':"/verify"});
     }
-    titleLinks.push(["Log Out","/logout"]);
+    titleLinks.push({'name':"Log Out",'url':"/logout"});
   }
   else{
-    titleLinks.push(["Create Account","/newAccount"]);
-  	 titleLinks.push(["Log In","/login"]);
+    titleLinks.push({'name':"Create Account",'url':"/newAccount"});
+  	 titleLinks.push({'name':"Log In",'url':"/login"});
   }
   const titleElems = []
   titleLinks.forEach((link, i) => {
-    titleElems.push(<a href={link[1]} className='headerLink' key={i}>{link[0]}</a>)
+    titleElems.push(<a href={link['url']} className='headerLink' key={i}>{link['name']}</a>)
   })
   return (
     <div id='headerBar' className="mobileHidden">{titleElems}</div>
