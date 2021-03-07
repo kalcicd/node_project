@@ -6,6 +6,7 @@ export default function Title (props) {
   return (
     <div id='titleAndHeaderBar'>
       <div id='titleBar'>
+        <button id="menuButton" className="desktopHidden">&#8801;</button>
         <a id='title' href='/'>NODE Project</a>
       </div>
       <div className="flexGrow" />
@@ -17,7 +18,7 @@ export default function Title (props) {
 export function HeaderBar (props) {
   const titleLinks = [
     ['About Us', '/about'],
-    ['Volunteer', '/volunteer'],
+    //['Volunteer', '/volunteer'],
     ['Developers', '/developers']
   ]
   //check if the user is logged in and if they are a verifier
@@ -36,6 +37,6 @@ export function HeaderBar (props) {
     titleElems.push(<a href={link[1]} className='headerLink' key={i}>{link[0]}</a>)
   })
   return (
-    <div id='headerBar'>{titleElems}</div>
+    <div id='headerBar' className="mobileHidden">{titleElems}</div>
   )
 }
