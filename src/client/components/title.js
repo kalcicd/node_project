@@ -1,15 +1,15 @@
 import React from 'react'
 
 export default function Title (props) {
-  let loggedIn = (props.logged_in !== undefined) ? props.logged_in : false
-  let isVerifier = (props.is_verifier !== undefined) ? props.is_verifier : false
+  let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
+  let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
   return (
     <div id='titleAndHeaderBar'>
       <div id='titleBar'>
         <a id='title' href='/'>NODE Project</a>
       </div>
-      <div className='flexGrow' />
-      <HeaderBar logged_in={loggedIn} is_verifier={isVerifier} />
+      <div className="flexGrow" />
+      <HeaderBar logged_in={logged_in} isVerifier={isVerifier}/>
     </div>
   )
 }
@@ -20,14 +20,16 @@ export function HeaderBar (props) {
     ['Volunteer', '/volunteer'],
     ['Developers', '/developers']
   ]
-  // check if the user is logged in and if they are a verifier
-  if (props.hasOwnProperty('logged_in') && props.logged_in === true) {
-    if (props.hasOwnProperty('is_verifier') && props.is_verifier === true) {
-      titleLinks.push(['Verify Submissions', '/verify'])
+  //check if the user is logged in and if they are a verifier
+  if(props.hasOwnProperty("logged_in") && props.logged_in===true){
+    if(props.hasOwnProperty("isVerifier") && props.isVerifier===true){
+	   titleLinks.push(["Verify Submissions","/verify"]);
     }
-    titleLinks.push(['Log Out', '/logout'])
-  } else {
-    titleLinks.push(['Log In', '/login'])
+    titleLinks.push(["Log Out","/logout"]);
+  }
+  else{
+    titleLinks.push(["Create Account","/newAccount"]);
+  	 titleLinks.push(["Log In","/login"]);
   }
   const titleElems = []
   titleLinks.forEach((link, i) => {

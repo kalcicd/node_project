@@ -2,13 +2,13 @@ import React from 'react'
 import Title from './title'
 
 export default function AboutUs (props) {
-  let loggedIn = (props.logged_in !== undefined) ? props.logged_in : false
-  let isVerifier = (props.is_verifier !== undefined) ? props.is_verifier : false
+  let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
+  let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
   return (
-    <div id='app'>
-      <Title logged_in={loggedIn} is_verifier={isVerifier} />
-      <div id='mainColumn'>
-        <div id='sectionHeader'>About Us</div>
+    <div id="app">
+      <Title logged_in={logged_in} isVerifier={isVerifier}/>
+      <div id="mainColumn">
+        <div id="sectionHeader">About Us</div>
         <p>
           This project was started with an OSU Capstone Project for CS 461. The inital developers
           were Davic Kalcic, Owen Haggerty, and Matt Kerr. The Project Managers were Emily

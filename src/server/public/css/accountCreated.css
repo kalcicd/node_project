@@ -1,0 +1,9 @@
+#successHeader{
+  text-align: center;
+  font-size: 1.6rem;
+  text-decoration: underline;
+}
+#successMessage{
+  text-align: center;
+  font-size: 1.3rem;
+}

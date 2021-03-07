@@ -2,5 +2,13 @@
   "geocoding": {
     "apiUrl": "https://maps.googleapis.com/maps/api/geocode/json",
     "apiKey": "KEY HERE"
+  },
+  "sessionSecret": {
+    "secret": "SECRET HERE"
+  },
+  "postgresql":{
+    "address": "DATABASE ADDRESS",
+    "user": "DATABASE USERNAME",
+    "pass": "DATABASE PASSWORD"
   }
 }
