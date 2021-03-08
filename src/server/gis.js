@@ -6,10 +6,11 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
   // Import the wms client
 
   // Create a wms client at server url
-  console.log("clientUrl: " + config.gis.clientUrl);
-  const wms = wmsclient(config.gis.clientUrl)
-  const parsedLat = parseFloat(lat)
-  const parsedLng = parseFloat(lng)
+  const url = "http://73.11.11.122/cgi-bin/qgis_mapserv.fcgi";
+  console.log("clientUrl: " + url);
+  const wms = wmsclient(url);
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
 
   // Set Location to query (bbox based on latitude and longitude input)
   const bboxvar = `${parsedLat - 0.01},${parsedLng - 0.01},${parsedLat + 0.01},${parsedLng + 0.01}`

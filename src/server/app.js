@@ -361,69 +361,33 @@ app.get('/location', async (req, res, next) => {
   })
   console.log("GIS Response: " + gisResponse)
   
-  //const GISIdentifiers = {'OR1', 'OR2'}; //Hard coded for now
+  
   
   //Get info for GIT identifiers
-  const queryString = "SELECT a.GISIdentifier, c.Name, c.HolderId, d.TypeName, d.LevelNum FROM Location a, Offices b, OfficeHolders c, LocationType d WHERE c.HolderId = b.CurrentHolder AND b.LocationId = a.LocationId AND d.TypeId = a.TypeId"
+  const queryString = 'SELECT a.gisidentifier, b.officetitle, c.name, c.holderid, d.levelnum FROM Locations a, Offices b, OfficeHolders c, LocationTypes d WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid';
   
+  var response = String(gisResponse);
+  let gisIdentifiers = response.split(',');
   
+  const locationRes = await databasePool.query(queryString, [gisIdentifiers]).catch((err) => {
+    console.error(err)
+    return res.status(500).send('A server error occurred, please try again')
+  })
   
-  //const locationRes = await databasePool.query(queryString);
    
-  //console.log(locationRes);
+  //console.log("Location Res Name: " + JSON.stringify(locationRes.rows));
   
    
+  const locationList = locationRes.rows
   
-  const locationList = [
-  {
-	  Name: "Joe Biden",
-	  HolderId: "0114",
-	  TypeName: "President",
-	  LevelNum: 0
-  },
-  {
-	  Name: "Representative Randy",
-	  HolderId: "0123",
-	  TypeName: "State House",
-	  LevelNum: 1
-  },
-  {
-	  Name: "Senator Sally",
-	  HolderId: "0334",
-	  TypeName: "State Senate",
-	  LevelNum: 1
-  },
-  {
-	  Name: "Kate Brown",
-	  HolderId: "0888",
-	  TypeName: "Governor",
-	  LevelNum: 1
-  },
-  {
-	  Name: "Joe Berney",
-	  HolderId: "0145",
-	  TypeName: "County Commisioner",
-	  LevelNum: 2
-  },
-  {
-	  Name: "Biff Traber",
-	  HolderId: "0624",
-	  TypeName: "Mayor",
-	  LevelNum: 3
-  },
-  {
-	  Name: "Ryan Noss",
-	  HolderId: "0194",
-	  TypeName: "Superintendent",
-	  LevelNum: 4
-  },
-  {
-	  Name: "Jane Doe",
-	  HolderId: "3547",
-	  TypeName: "Utility Board Member",
-	  LevelNum: 5
-  }
-  ];
+  locationList.push({
+	  name: "Joe Biden",
+	  holderid: "0114",
+	  officetitle: "President",
+	  levelnum: 0
+  });
+  
+  //console.log("Location List: " + locationList);
   
   
   
@@ -439,9 +403,9 @@ app.get('/location', async (req, res, next) => {
   
 	for(var i = 0; i < locationList.length; i++){
 		var loc = locationList[i];
-		//console.log(loc.LevelNum);
+		//console.log(loc.levelnum);
 		var prop;
-		switch(loc.LevelNum){
+		switch(loc.levelnum){
 			case 0:
 				prop = locationProps.federal;
 				break;
@@ -465,9 +429,9 @@ app.get('/location', async (req, res, next) => {
 				break;		  		  
 		}
 		prop.push({
-					title: loc.TypeName,
-					name: loc.Name,
-					id: "/officeholder/"+loc.HolderId
+					title: loc.officetitle,
+					name: loc.name,
+					id: "/officeholder/"+loc.holderid
 					});
 	  
   }
@@ -483,11 +447,22 @@ app.get('/location', async (req, res, next) => {
   return res.status(200).send(page)
 })
 
-app.get('/officeholder/:officeholderId', (req, res, next) => {
+app.get('/officeholder/:officeholderId', async (req, res, next) => {
   const { officeholderId } = req.params
-
+  
+  const queryString = 'SELECT * FROM OfficeHolders a, Offices b WHERE a.holderid=$1 AND a.holderid=b.currentholder';
+  var queryId = officeholderId;
+  
+  const officeRes = await databasePool.query(queryString, [queryId]).catch((err) => {
+    console.error(err)
+    return res.status(500).send('A server error occurred, please try again')
+  })
+  console.log(JSON.stringify(officeRes.rows));
+  
+  
+  
   // todo: query db with officeholder id to get officeholderProps. An example response from the db is hardcoded below
-  const officeholderProps = {
+  var officeholderVar = {
     officeTitle: 'Lane County Commissioner',
     officeholderName: 'Joe Berney',
     termStart: 'January 2019',
@@ -497,10 +472,26 @@ app.get('/officeholder/:officeholderId', (req, res, next) => {
     email: 'joe.berney@lanecounty-or.gov',
     meetings: 'Every Monday at 9am at Lance county Courthouse, Eugene, Oregon'
   }
+  
+  if(officeRes.rows != null && officeRes.rows[0] != null){
+	var sourceInfo = officeRes.rows[0];
+		officeholderVar.officeTitle = sourceInfo.officetitle,
+		officeholderVar.officeholderName = sourceInfo.name,
+		officeholderVar.termStart = String(sourceInfo.termstart),
+		officeholderVar.termEnd = String(sourceInfo.termend),
+		officeholderVar.nextElectionDate = String(sourceInfo.termend),
+		officeholderVar.phone = sourceInfo.contactphone,
+		officeholderVar.email = sourceInfo.contactemail,
+		officeholderVar.meetings = sourceInfo.contactmeeting
+  } 
+  
+  console.log(officeholderVar);
+  const officeholderProps = officeholderVar;
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps))
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css')
-  res.status(200).send(page)
+	let page = template.replace('<!-- CONTENT -->', renderedContent)
+	page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css')
+	res.status(200).send(page)
+  
 })
 
 app.get('/search', (req, res, next) => {
