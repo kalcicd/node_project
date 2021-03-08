@@ -21,7 +21,7 @@ import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 import { gisLocationQuery } from './gis'
-import { getAllPending, updateField } from './sql'
+import { getPendingChanges, updateField } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -117,24 +117,8 @@ app.get('/verify', async (req, res, next) => {
     return
   }
   // todo: need to retrieve current field value in addition to pending value
-  // const submissions = await getAllPending().catch((err) => { res.status(500).send(err) })
+  const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) })
 
-  let submissions = [ // temporary submissions list
-    {
-      'title': 'Corvalis',
-      'type': 'location',
-      'reference': 'https://en.wikipedia.org',
-      'id': 0,
-      'updates': [['Location', 'Corvalis', 'Corvallis']]
-    },
-    {
-      'title': 'Corvallis City Council Member',
-      'type': 'office',
-      'reference': 'https://en.wikipedia.org',
-      'id': 0,
-      'updates': [['OfficeTitle', 'City Council Member', 'City Councilor']]
-    }
-  ]
   const renderedContent = renderToString(<Verify
     submissions={submissions} logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier}
   />)
