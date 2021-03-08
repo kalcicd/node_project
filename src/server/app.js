@@ -21,7 +21,7 @@ import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 import { gisLocationQuery } from './gis'
-import { getAllPending, updateField } from './sql'
+import { getAllPending, updateField, getLocationProps, getOfficeholderData } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -362,35 +362,11 @@ app.get('/location', async (req, res, next) => {
   console.log("GIS Response: " + gisResponse)
   
   
-  
-  //Get info for GIT identifiers
-  const queryString = 'SELECT a.gisidentifier, b.officetitle, c.name, c.holderid, d.levelnum FROM Locations a, Offices b, OfficeHolders c, LocationTypes d WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid';
-  
-  var response = String(gisResponse);
-  let gisIdentifiers = response.split(',');
-  
-  const locationRes = await databasePool.query(queryString, [gisIdentifiers]).catch((err) => {
+  const locationList = await getLocationProps(gisResponse).catch((err) => {
     console.error(err)
-    return res.status(500).send('A server error occurred, please try again')
+    return res.status(500).send('500')
   })
-  
-   
-  //console.log("Location Res Name: " + JSON.stringify(locationRes.rows));
-  
-   
-  const locationList = locationRes.rows
-  
-  locationList.push({
-	  name: "Joe Biden",
-	  holderid: "0114",
-	  officetitle: "President",
-	  levelnum: 0
-  });
-  
-  //console.log("Location List: " + locationList);
-  
-  
-  
+    
   const locationProps = {
 	  federal: [],
 	  state: [],
@@ -450,43 +426,12 @@ app.get('/location', async (req, res, next) => {
 app.get('/officeholder/:officeholderId', async (req, res, next) => {
   const { officeholderId } = req.params
   
-  const queryString = 'SELECT * FROM OfficeHolders a, Offices b WHERE a.holderid=$1 AND a.holderid=b.currentholder';
-  var queryId = officeholderId;
-  
-  const officeRes = await databasePool.query(queryString, [queryId]).catch((err) => {
+  const officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     console.error(err)
-    return res.status(500).send('A server error occurred, please try again')
+    return res.status(500).send('500')
   })
-  console.log(JSON.stringify(officeRes.rows));
   
-  
-  
-  // todo: query db with officeholder id to get officeholderProps. An example response from the db is hardcoded below
-  var officeholderVar = {
-    officeTitle: 'Lane County Commissioner',
-    officeholderName: 'Joe Berney',
-    termStart: 'January 2019',
-    termEnd: 'May 2022',
-    nextElectionDate: 'May 2022',
-    phone: '541-746-2583',
-    email: 'joe.berney@lanecounty-or.gov',
-    meetings: 'Every Monday at 9am at Lance county Courthouse, Eugene, Oregon'
-  }
-  
-  if(officeRes.rows != null && officeRes.rows[0] != null){
-	var sourceInfo = officeRes.rows[0];
-		officeholderVar.officeTitle = sourceInfo.officetitle,
-		officeholderVar.officeholderName = sourceInfo.name,
-		officeholderVar.termStart = String(sourceInfo.termstart),
-		officeholderVar.termEnd = String(sourceInfo.termend),
-		officeholderVar.nextElectionDate = String(sourceInfo.termend),
-		officeholderVar.phone = sourceInfo.contactphone,
-		officeholderVar.email = sourceInfo.contactemail,
-		officeholderVar.meetings = sourceInfo.contactmeeting
-  } 
-  
-  console.log(officeholderVar);
-  const officeholderProps = officeholderVar;
+  console.log(officeholderProps);
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps))
 	let page = template.replace('<!-- CONTENT -->', renderedContent)
 	page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css')

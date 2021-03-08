@@ -6,7 +6,7 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
   // Import the wms client
 
   // Create a wms client at server url
-  const url = "http://73.11.11.122/cgi-bin/qgis_mapserv.fcgi";
+  const url = config.gisinfo.url;
   console.log("clientUrl: " + url);
   const wms = wmsclient(url);
   const parsedLat = parseFloat(lat);
