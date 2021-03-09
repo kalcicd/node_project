@@ -21,7 +21,14 @@ import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 import { gisLocationQuery } from './gis'
-import { getPendingChanges, updateField, updateData, deletePendingData } from './sql'
+import {
+  getPendingChanges,
+  updateField,
+  updateData,
+  deletePendingData,
+  getOfficeholderData,
+  getLocationProps
+} from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -156,7 +163,7 @@ app.post('/verify', async(req,res,next)=>{
 
 // Create new account page
 app.get('/newAccount', (req, res, next) => {
-  let userStatus = userLoginStatus(req);
+  let userStatus = userLoginStatus(req)
   if (userStatus.logged_in === true) {
     // redirect if the user is already logged in
     const renderedContent = renderToString(
@@ -180,12 +187,13 @@ app.post('/newAccount', async (req, res, next) => {
     page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
     res.status(400).send(page)
   }
+
   // check that all required fields were passed
   let hasRequiredFields = true
-  hasRequiredFields = hasRequiredFields && (req.body.username !== undefined && req.body.username !== '')
-  hasRequiredFields = hasRequiredFields && (req.body.email !== undefined && req.body.email !== '')
-  hasRequiredFields = hasRequiredFields && (req.body.pass !== undefined && req.body.pass !== '')
-  hasRequiredFields = hasRequiredFields && (req.body.pass2 !== undefined && req.body.pass2 !== '')
+  hasRequiredFields = hasRequiredFields && (req.body['username'] !== undefined && req.body['username'] !== '')
+  hasRequiredFields = hasRequiredFields && (req.body['email'] !== undefined && req.body['email'] !== '')
+  hasRequiredFields = hasRequiredFields && (req.body['pass'] !== undefined && req.body['pass'] !== '')
+  hasRequiredFields = hasRequiredFields && (req.body['pass2'] !== undefined && req.body['pass2'] !== '')
   if (!hasRequiredFields) {
     accountCreationFailed('Not all required fields were filled')
     return
@@ -194,12 +202,12 @@ app.post('/newAccount', async (req, res, next) => {
   let existingUser = await databasePool.query(
     'SELECT * FROM Users WHERE username=$1', [req.body.username]
   )
-  if (existingUser.rows.length > 0) {
+  if (existingUser['rows'].length > 0) {
     accountCreationFailed('The username is already taken')
     return
   }
   // check that the password and confirm password field match
-  if (req.body.pass !== req.body.pass2) {
+  if (req.body.pass !== req.body['pass2']) {
     accountCreationFailed('The password and confirm password fields do not match')
     return
   }
@@ -207,7 +215,8 @@ app.post('/newAccount', async (req, res, next) => {
   bcrypt.hash(req.body.pass, bcryptSaltRounds, (err, hash) => {
     if (err) { // show an error page to the user if hashing the password failed
       // todo: log error output to console or file
-      const renderedContent = renderToString(<GeneralError errorHeader='500 Internal Server Error' errorMessage='An error occurred while creating the user, please try again or contact an administrator if the problem persists' />)
+      const renderedContent = renderToString(<GeneralError errorHeader='500 Internal Server Error'
+        errorMessage='An error occurred while creating the user, please try again or contact an administrator if the problem persists' />)
       let page = template.replace('<!-- CONTENT -->', renderedContent)
       res.status(500).send(page)
     } else {
@@ -217,33 +226,34 @@ app.post('/newAccount', async (req, res, next) => {
         in newUserQuery
       */
       let newUserQuery = 'INSERT INTO Users (username,email,passwd'
-      let newUserData = [req.body.username, req.body.email, hash]
-      if (req.body.name !== '') { // check if the Name field was filled
+      let newUserData = [req.body['username'], req.body['email'], hash]
+      if (req.body['name'] !== '') { // check if the Name field was filled
         newUserQuery += ',name'
         newUserData.push(req.body.name)
       }
-      if (req.body.phone !== '') { // check if the Phone Number field was filled
+      if (req.body['phone'] !== '') { // check if the Phone Number field was filled
         newUserQuery += ',phone'
         // reduce the phone number to only decimal digits
-        let reducedPhoneNumber = String(req.body.phone).replace(/[^0-9]/g, '')
+        let reducedPhoneNumber = String(req.body['phone']).replace(/[^0-9]/g, '')
         newUserData.push(reducedPhoneNumber)
       }
-      if (req.body.address !== '' || req.body.city !== '' || req.body.zip !== '') {
-        if (req.body.address === '' || req.body.city === '' || req.body.state === undefined || req.body.zip === '') {
+      if (req.body['address'] !== '' || req.body['city'] !== '' || req.body['zip'] !== '') {
+        if (req.body['address'] === '' || req.body['city'] === '' || req.body.state === undefined || req.body['zip'] === '') {
           // send an error that only part of the address was filled out
-          const errorContent = renderToString(<NewAccount hasError errorMessage='Only some of the address fields were filled out, please either fill out all of the fields or leave them all blank' />)
+          const errorContent = renderToString(<NewAccount hasError
+            errorMessage='Only some of the address fields were filled out, please either fill out all of the fields or leave them all blank' />)
           let page = template.replace('<!-- CONTENT -->', errorContent)
           page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
           res.status(400).send(page)
         }
         newUserQuery += ',addressline1,addresscity,addressstate,addresszip'
-        newUserData.push(req.body.address)
-        newUserData.push(req.body.city)
-        newUserData.push(req.body.state)
-        newUserData.push(req.body.zip)
-        if (req.body.address2 !== '') {
+        newUserData.push(req.body['address'])
+        newUserData.push(req.body['city'])
+        newUserData.push(req.body['state'])
+        newUserData.push(req.body['zip'])
+        if (req.body['address2'] !== '') {
           newUserQuery += ',addressline2'
-          newUserData += newUserData.push(req.body.address2)
+          newUserData += newUserData.push(req.body['address2'])
         }
       }
       // finish query string with formatting indicators ($1,$2,etc.)
@@ -256,12 +266,13 @@ app.post('/newAccount', async (req, res, next) => {
       databasePool.query(newUserQuery, newUserData, (err, queryRes) => {
         if (err) { // an error occurred while inserting the values into the database
           // log the error
-          console.log('An error occurred while adding a user to the database:')
-          console.log('\tQuery:' + newUserQuery)
-          console.log('\tData:' + String(newUserData))
-          console.log('\tError:' + err)
+          console.error('An error occurred while adding a user to the database:')
+          console.error('\tQuery:' + newUserQuery)
+          console.error('\tData:' + String(newUserData))
+          console.error('\tError:' + err)
           // send an error message
-          const errorContent = renderToString(<NewAccount hasError errorMessage='A server error occurred, please try again' />)
+          const errorContent = renderToString(<NewAccount hasError
+            errorMessage='A server error occurred, please try again' />)
           let page = template.replace('<!-- CONTENT -->', errorContent)
           page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
           res.status(500).send(page)
@@ -313,17 +324,17 @@ app.post('/login', async (req, res, next) => {
     console.error(err)
     return res.status(500).send('A server error occurred, please try again')
   })
-  if (userRes.rows.length > 0 && userRes.rows[0].username === username) {
+  if (userRes['rows'].length > 0 && userRes['rows'][0].username === username) {
     // the user was found in the database, compare the passwords
     bcrypt.compare(
       req.body.pass,
-      userRes.rows[0].passwd,
+      userRes['rows'][0]['passwd'],
       function (err, result) {
         if (err === undefined) { // no errors occurred
           if (result) { // login was successful
-            req.session.user = username;
-            req.session.isVerifier = userRes.rows[0].isverifier;
-            res.redirect('/');
+            req.session.user = username
+            req.session.isVerifier = userRes['rows'][0]['isverifier']
+            res.redirect('/')
           } else { // login failed
             loginFailed()
           }
@@ -339,7 +350,7 @@ app.post('/login', async (req, res, next) => {
 
 // handle user logout
 app.get('/logout', (req, res, next) => {
-  req.session.destroy(function (err) {
+  req.session.destroy((err) => {
     if (!err) { // no errors occurred
       res.redirect(302, '/')
     } else { // an error occurred while trying to logout
@@ -378,32 +389,77 @@ app.get('/location', async (req, res, next) => {
   if (lat === undefined || lng === undefined) {
     return res.redirect('/404')
   }
+  // Get GIS identifiers for location
   const gisResponse = await gisLocationQuery(lat, lng).catch((err) => {
     console.error(err)
     return res.status(500).send('500')
   })
-  console.log(gisResponse)
+  console.log('GIS Response: ' + gisResponse)
 
-  const renderedContent = renderToString(React.createElement(Location, { lat, lng }))
+  const locationList = await getLocationProps(gisResponse).catch((err) => {
+    console.error(err)
+    return res.status(500).send('500')
+  })
+
+  const locationProps = {
+    federal: [],
+    state: [],
+    county: [],
+    city: [],
+    school: [],
+    local: [],
+    other: []
+  }
+
+  for (let i = 0; i < locationList.length; i++) {
+    const loc = locationList[i]
+    let prop
+    switch (loc.levelnum) {
+      case 0:
+        prop = locationProps.federal
+        break
+      case 1:
+        prop = locationProps.state
+        break
+      case 2:
+        prop = locationProps.county
+        break
+      case 3:
+        prop = locationProps.city
+        break
+      case 4:
+        prop = locationProps.school
+        break
+      case 5:
+        prop = locationProps.local
+        break
+      default:
+        prop = locationProps.other
+        break
+    }
+    prop.push({
+      title: loc.officetitle,
+      name: loc.name,
+      id: `/officeholder/${loc.holderid}`
+    })
+  }
+
+  const renderedContent = renderToString(React.createElement(Location, locationProps))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
   return res.status(200).send(page)
 })
 
-app.get('/officeholder/:officeholderId', (req, res, next) => {
+app.get('/officeholder/:officeholderId', async (req, res, next) => {
   const { officeholderId } = req.params
+  const officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
+    if (err.code === '22P02') {
+      // catches the case where locationId is not an integer
+      return res.status(404).redirect('/404')
+    }
+    return res.status(500).send('500')
+  })
 
-  // todo: query db with officeholder id to get officeholderProps. An example response from the db is hardcoded below
-  const officeholderProps = {
-    officeTitle: 'Lane County Commissioner',
-    officeholderName: 'Joe Berney',
-    termStart: 'January 2019',
-    termEnd: 'May 2022',
-    nextElectionDate: 'May 2022',
-    phone: '541-746-2583',
-    email: 'joe.berney@lanecounty-or.gov',
-    meetings: 'Every Monday at 9am at Lance county Courthouse, Eugene, Oregon'
-  }
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css')

@@ -6,7 +6,9 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
   // Import the wms client
 
   // Create a wms client at server url
-  const wms = wmsclient(config.gis.clientUrl)
+  const url = config.gisInfo.url
+  console.log('clientUrl: ' + url)
+  const wms = wmsclient(url)
   const parsedLat = parseFloat(lat)
   const parsedLng = parseFloat(lng)
 
@@ -36,37 +38,37 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
       reject(err)
       return
     }
-    console.log('RESPONSE: ', response)
 
     // Get array of responses
     const responseList = response['wfs%3afeaturecollection']['gml%3afeaturemember']
 
-    // Set up results object
-    const results = {
-      USHouse: null,
-      StateSenate: null,
-      StateHouse: null,
-      SchoolDistrict: null
-    }
+    console.log('ResponseList: ' + responseList)
 
-    // Parse response list into results object
-    let i, r
-    for (i = 0; i < responseList.length; i++) {
-      r = responseList[i]
-      if (r['qgs%3aushouse']) {
-        results.USHouse = r['qgs%3aushouse']['qgs%3anamelsad']
+    const results = []
+
+    if (responseList != null) {
+      // Parse response list into results object
+      let i, r
+      for (i = 0; i < responseList.length; i++) {
+        r = responseList[i]
+        if (r['qgs%3aushouse']) {
+          results.push(r['qgs%3aushouse']['qgs%3ageoid'] + r['qgs%3aushouse']['qgs%3anamelsad'])
+        }
+        if (r['qgs%3aorstatesenate']) {
+          results.push(r['qgs%3aorstatesenate']['qgs%3ageoid'] + r['qgs%3aorstatesenate']['qgs%3anamelsad'])
+        }
+        if (r['qgs%3aorstatehouse']) {
+          results.push(r['qgs%3aorstatehouse']['qgs%3ageoid'] + r['qgs%3aorstatehouse']['qgs%3anamelsad'])
+        }
+        if (r['qgs%3aorschooldistricts']) {
+          results.push(r['qgs%3aorschooldistricts']['qgs%3ageoid'] + r['qgs%3aorschooldistricts']['qgs%3aname'])
+        }
       }
-      if (r['qgs%3aorstatesenate']) {
-        results.StateSenate = r['qgs%3aorstatesenate']['qgs%3anamelsad']
-      }
-      if (r['qgs%3aorstatehouse']) {
-        results.StateHouse = r['qgs%3aorstatehouse']['qgs%3anamelsad']
-      }
-      if (r['qgs%3aorschooldistricts']) {
-        results.SchoolDistrict = r['qgs%3aorschooldistricts']['qgs%3aname']
-      }
+      resolve(results)
+    } else {
+      console.log('No results received from GIS Response')
+      resolve(null)
     }
-    resolve(results)
   })
 })
 

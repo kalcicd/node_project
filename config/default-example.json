@@ -6,6 +6,9 @@
   "sessionSecret": {
     "secret": "SECRET HERE"
   },
+  "gisInfo": {
+    "url": "GIS ADDRESS"
+  },
   "postgresql":{
     "address": "DATABASE ADDRESS",
     "user": "DATABASE USERNAME",
