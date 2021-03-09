@@ -1,11 +1,11 @@
-FROM node:8-slim
+FROM node:10-slim
 
 WORKDIR /opt/app/
 
-COPY package.json yarn.lock ./
+COPY package.json ./
 
-RUN yarn install
+RUN npm install
 
 COPY . .
 
-CMD yarn start
+CMD npm start

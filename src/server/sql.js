@@ -103,7 +103,7 @@ const getTitle = (row, type) => {
     return (row['locationid'] !== null) ? row['locationname'] : row['newname']
   }
   if (type === 'election') {
-    return (row['electionid'] !== null) ? `Election id: ${row.electionid}` : 'New Election'
+    return (row['electionid'] !== null) ? `Election id: ${row['electionid']}` : 'New Election'
   }
   if (type === 'office') {
     return (row['officeid'] !== null) ? row['officetitle'] : row['newtitle']
