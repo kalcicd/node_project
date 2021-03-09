@@ -6,11 +6,11 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
   // Import the wms client
 
   // Create a wms client at server url
-  const url = config.gisinfo.url;
-  console.log("clientUrl: " + url);
-  const wms = wmsclient(url);
-  const parsedLat = parseFloat(lat);
-  const parsedLng = parseFloat(lng);
+  const url = config.gisInfo.url
+  console.log('clientUrl: ' + url)
+  const wms = wmsclient(url)
+  const parsedLat = parseFloat(lat)
+  const parsedLng = parseFloat(lng)
 
   // Set Location to query (bbox based on latitude and longitude input)
   const bboxvar = `${parsedLat - 0.01},${parsedLng - 0.01},${parsedLat + 0.01},${parsedLng + 0.01}`
@@ -38,39 +38,37 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
       reject(err)
       return
     }
-    //console.log('RESPONSE: ', response)
 
     // Get array of responses
     const responseList = response['wfs%3afeaturecollection']['gml%3afeaturemember']
-	
-	console.log('ResponseList: ' + responseList);
-	
-	var results = []
-	
-	if(responseList != null){
 
-		// Parse response list into results object
-		let i, r
-		for (i = 0; i < responseList.length; i++) {
-		  r = responseList[i]
-		  if (r['qgs%3aushouse']) {
-			results.push(r['qgs%3aushouse']['qgs%3ageoid']+r['qgs%3aushouse']['qgs%3anamelsad'])
-		  }
-		  if (r['qgs%3aorstatesenate']) {
-			results.push(r['qgs%3aorstatesenate']['qgs%3ageoid']+r['qgs%3aorstatesenate']['qgs%3anamelsad'])
-		  }
-		  if (r['qgs%3aorstatehouse']) {
-			results.push(r['qgs%3aorstatehouse']['qgs%3ageoid']+r['qgs%3aorstatehouse']['qgs%3anamelsad'])
-		  }
-		  if (r['qgs%3aorschooldistricts']) {
-			results.push(r['qgs%3aorschooldistricts']['qgs%3ageoid']+r['qgs%3aorschooldistricts']['qgs%3aname'])
-		  }
-		}
-		resolve(results)
-	} else {
-		console.log("No results received from GIS Response")
-		resolve(null)
-	}
+    console.log('ResponseList: ' + responseList)
+
+    const results = []
+
+    if (responseList != null) {
+      // Parse response list into results object
+      let i, r
+      for (i = 0; i < responseList.length; i++) {
+        r = responseList[i]
+        if (r['qgs%3aushouse']) {
+          results.push(r['qgs%3aushouse']['qgs%3ageoid'] + r['qgs%3aushouse']['qgs%3anamelsad'])
+        }
+        if (r['qgs%3aorstatesenate']) {
+          results.push(r['qgs%3aorstatesenate']['qgs%3ageoid'] + r['qgs%3aorstatesenate']['qgs%3anamelsad'])
+        }
+        if (r['qgs%3aorstatehouse']) {
+          results.push(r['qgs%3aorstatehouse']['qgs%3ageoid'] + r['qgs%3aorstatehouse']['qgs%3anamelsad'])
+        }
+        if (r['qgs%3aorschooldistricts']) {
+          results.push(r['qgs%3aorschooldistricts']['qgs%3ageoid'] + r['qgs%3aorschooldistricts']['qgs%3aname'])
+        }
+      }
+      resolve(results)
+    } else {
+      console.log('No results received from GIS Response')
+      resolve(null)
+    }
   })
 })
 
