@@ -2,7 +2,7 @@ FROM node:10-slim
 
 WORKDIR /opt/app/
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 
 RUN npm install
 
