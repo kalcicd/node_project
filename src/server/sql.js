@@ -5,13 +5,13 @@ const databasePool = new Pool({
   host: config.postgresql.address,
   user: config.postgresql.user,
   password: config.postgresql.pass
-});
+})
 
-function escapeSql(str){
-  //todo: cover other cases
-  let escapedStr = str.replace("'","''");
-  escapedStr = "'" + escapedStr + "'";
-  return escapedStr;
+function escapeSql (str) {
+  // todo: cover other cases
+  let escapedStr = str.replace('\'', '\'\'')
+  escapedStr = '\'' + escapedStr + '\''
+  return escapedStr
 }
 
 const tableDict = {
@@ -100,86 +100,86 @@ const getTitle = (row, type) => {
   /* Takes a row from a database query and the type of query it is and returns a title to be
   displayed on the verifier interface */
   if (type === 'location') {
-    return (row['locationid']!==null)?row['locationname']:row['newname'];
+    return (row['locationid'] !== null) ? row['locationname'] : row['newname']
   }
   if (type === 'election') {
-    return (row['electionid']!==null)?`Election id: ${row.electionid}`:'New Election';
+    return (row['electionid'] !== null) ? `Election id: ${row.electionid}` : 'New Election'
   }
   if (type === 'office') {
-    return (row['officeid']!==null)?row['officetitle']:row['newtitle'];
+    return (row['officeid'] !== null) ? row['officetitle'] : row['newtitle']
   }
   if (type === 'officeholder') {
-    return (row['holderid'])?row['name']:row['newname'];
+    return (row['holderid']) ? row['name'] : row['newname']
   }
 }
 
 const updateField = (type, rowId, updates) => new Promise(async (resolve, reject) => {
   /* Takes a type, rowId, and an object containing the updates to be made to a row in a table.
    Constructs and sends an query to update the given fields */
-  let updateStrings = [];
+  let updateStrings = []
   updates.forEach((elem) => {
-    let fieldName = elem[0];
-	 let value = escapeSql(elem[1]);
-    updateStrings.push(`${fieldName} = ${value}`);
-  });
-  const queryString = `UPDATE ${tableDict[type].tableName} SET ${updateStrings.join(',')} WHERE ${tableDict[type].idName} = ${rowId}`;
-  const response = await databasePool.query(queryString).catch((err) => reject(err));
-  console.log(response);
-  resolve(response);
-});
+    let fieldName = elem[0]
+    let value = escapeSql(elem[1])
+    updateStrings.push(`${fieldName} = ${value}`)
+  })
+  const queryString = `UPDATE ${tableDict[type].tableName} SET ${updateStrings.join(',')} WHERE ${tableDict[type].idName} = ${rowId}`
+  const response = await databasePool.query(queryString).catch((err) => reject(err))
+  console.log(response)
+  resolve(response)
+})
 
 const getPendingChanges = () => new Promise(async (resolve, reject) => {
   /* Retrieves all entries from pending data tables to be displayed to verifier */
   const allPending = []
   for (const type of Object.keys(tableDict)) {
     const { idName, tableName, pendingIdName, pendingTableName } = tableDict[type]
-    const query = `SELECT * FROM ${tableName} AS a JOIN ${pendingTableName} AS b ON a.${idName} = b.${idName}`;
+    const query = `SELECT * FROM ${tableName} AS a JOIN ${pendingTableName} AS b ON a.${idName} = b.${idName}`
     const { rows } = await databasePool.query(query).catch((err) => {
       reject(err)
     })
 
-    //format queried data into the correct structure for the frontend
+    // format queried data into the correct structure for the frontend
     for (const row of rows) {
       allPending.push({
         'title': getTitle(row, type),
         'type': type,
-        'id': type + "_" + row[tableDict[type]['pendingIdName']],
-        'isNew': row[tableDict[type]['idName']]===null,
+        'id': type + '_' + row[tableDict[type]['pendingIdName']],
+        'isNew': row[tableDict[type]['idName']] === null,
         'reference': row['referencelink'],
         'updates': getFormattedUpdates(row, type),
         'updateTarget': row[tableDict[type]['idName']]
-      });
+      })
     }
   }
-  resolve(allPending);
-});
+  resolve(allPending)
+})
 
 const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(async (resolve, reject) => {
   /* Updates data or creates new entry based on the updateIdStr and deletes the pending entry from
-  the database*/
-  //todo: error handling
-  let updateType = updateIdStr.split("_")[0];
-  let updateChangesArr = updateChanges.split(",").map(elem => elem.split(":"));
-  await updateField(updateType, updateTarget, updateChangesArr).catch((err)=>{reject(err)});;
-  await deletePendingData(updateIdStr).catch((err)=>{reject(err)});
-  resolve(null);
-});
+  the database */
+  // todo: error handling
+  let updateType = updateIdStr.split('_')[0]
+  let updateChangesArr = updateChanges.split(',').map(elem => elem.split(':'))
+  await updateField(updateType, updateTarget, updateChangesArr).catch((err) => { reject(err) })
+
+  await deletePendingData(updateIdStr).catch((err) => { reject(err) })
+  resolve(null)
+})
 
 const deletePendingData = (updateIdStr) => new Promise(async (resolve, reject) => {
   /* Deletes a pending data row from the database */
-  //extact the id and type from the given string
-  let type = updateIdStr.split("_")[0];
-  let id = updateIdStr.split("_")[1];
-  //get table and id column names
-  let tableName = tableDict[type]["pendingTableName"];
-  let idField = tableDict[type]["pendingIdName"];
-  //todo: check for errors before sending query
-  //send delete request
-  //let deleteQuery = `DELETE FROM ${tableName} WHERE ${idField} = ${id}`;
-  let deleteQuery = "SLEEct * FORM table";
-  const result = await databasePool.query(deleteQuery).catch((err)=>{reject(err)});
-  resolve(result);
-});
+  // extract the id and type from the given string
+  let type = updateIdStr.split('_')[0]
+  let id = updateIdStr.split('_')[1]
+  // get table and id column names
+  let tableName = tableDict[type]['pendingTableName']
+  let idField = tableDict[type]['pendingIdName']
+  // todo: check for errors before sending query
+  // send delete request
+  let deleteQuery = `DELETE FROM ${tableName} WHERE ${idField} = ${id}`
+  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) })
+  resolve(result)
+})
 
 const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) => {
   let locationList = []
