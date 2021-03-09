@@ -38,14 +38,14 @@ export class UnverifiedSubmission extends React.Component {
     */
     super(props);
     this.props = props;
-    this.state = { rejectionReason: '' };
   }
 
   render () {
     if (this.props.hasOwnProperty('submission') && this.props.hasOwnProperty('index')) {
       let submission = this.props.submission;
-      let submissionId = 'submission' + String(this.props.index);
+      let submissionDivId = 'submission' + String(this.props.index);
       let submissionRejectId = 'submissionReject' + String(this.props.index);
+      let submissionReasonId = 'submissionReason' + String(this.props.index);
       let submissionRadios = 'submissionRejectReason' + String(this.props.index);
 
       //assemble table data for updates
@@ -77,13 +77,40 @@ export class UnverifiedSubmission extends React.Component {
         submissionHeader.push(<th key="headerData">Data</th>);
       }
 
+      //create rejection radio buttons
+      const rejectionOptions = [
+        {
+          'title':'Inaccurate Information',
+          'reason':'The given information was inaccurate.'
+        },
+        {
+          'title':'Outdated Information',
+          'reason':'The provided information was outdated.'
+        },
+        {
+          'title':'Poor Quality Reference',
+          'reason':'The reference given was of poor quality or inaccurate.'
+        },
+        {
+          'title':'Other',
+          'reason':''
+        }
+      ];
+      let rejectionRadios = [];
+      rejectionOptions.forEach((elem,i)=>{
+        rejectionRadios.push(
+          this.renderRadioButton(submissionRadios,elem.title,elem.reason,submissionReasonId)
+        );
+      });
+
       return (
         <div className='submission'>
           <div className='submissionHeader'>{submission.title}</div>
-          <button type='button' className='submissionShowHideButton' data-target={submissionId}>
+          <button type='button' className='submissionShowHideButton' data-target={submissionDivId}>
             Show/Hide
           </button>
-          <div className='submissionBody hidden' id={submissionId}>
+          <div className='submissionBody hidden' id={submissionDivId}
+            data-update-id={submission.id} data-update-target={submission.updateTarget}>
             <table className='submissionUpdateTable'>
               <thead>
                 <tr className='submissionUpdateTableHeaderRow'>
@@ -107,13 +134,9 @@ export class UnverifiedSubmission extends React.Component {
               <div className='submissionRejectWrapper hidden' id={submissionRejectId}>
                 <div className='submissionRejectHeader' checked>Reason for Rejection</div>
                 <div className='submissionRejectReasonRadioButtons'>
-                  {this.renderRadioButton(submissionRadios, 'Inaccurate Information', 'None')}
-                  {this.renderRadioButton(submissionRadios, 'Outdated Information', 'None')}
-                  {this.renderRadioButton(submissionRadios, 'Poor Quality Reference', 'None')}
-                  {this.renderRadioButton(submissionRadios, 'Custom Reason', 'None')}
+                  {rejectionRadios}
                 </div>
-                <textarea className='submissionRejectReasonTextArea'
-                  rows='7' defaultValue={this.state.rejectionReason} />
+                <textarea id={submissionReasonId} className='submissionRejectReasonTextArea' rows='7' />
                 <button type='button' className='submissionConfirmRejectButton'>
                   Confirm Rejection
                 </button>
@@ -127,15 +150,14 @@ export class UnverifiedSubmission extends React.Component {
     }
   }
 
-  renderRadioButton (name, label, reason) {
+  renderRadioButton (name, label, reason, textboxId) {
     let stateUpdateFunction = (newReason) => {
       let newState = this.state.slice();
       newState['rejectionReason'] = newReason;
       this.setState(newState);
     }
     return (
-      <RejectionReasonRadioButton name={name} label={label} reason={reason}
-        reasonUpdate={stateUpdateFunction} />
+      <RejectionReasonRadioButton name={name} label={label} reason={reason} textbox={textboxId} />
     );
   }
 }
@@ -144,13 +166,14 @@ export class RejectionReasonRadioButton extends React.Component {
   // a radio button which describes the reason for rejecting a submission
   constructor (props) {
     super(props)
-    this.name = props.name
-    this.label = props.label
-    this.reason = props.reason
-    this.reasonUpdate = props.reasonUpdate
+    this.name = props.name;
+    this.label = props.label;
+    this.reason = props.reason;
+    this.textbox = props.textbox
   }
 
   handleChange (event) {
+    /* Currently unused */
     if (event.target.checked) {
       let newState = { rejectionReason: this.reason };
       this.reasonUpdate(newState);
@@ -160,7 +183,7 @@ export class RejectionReasonRadioButton extends React.Component {
   render () {
     return (
       <label className='submissionRejectReasonLabel'>
-        <input type='radio' name={this.name} onChange={this.handleChange} />
+        <input type='radio' name={this.name} data-reason={this.reason} data-textbox={this.textbox} />
         {this.label}
       </label>
     );

@@ -81,6 +81,16 @@
 	font-size: 1rem;
 }
 .submissionRejectReasonTextArea{
-	min-width: 60%;
+	width: 80%;
 	margin: 5px auto 5px auto;
+  font-size: 1.3rem;
+  font-family: sans-serif;
+  border: 1px solid black;
+  text-align: center;
+}
+.submissionRejectReasonTextArea[disabled]{
+  background: rgba(0,0,0,0);
+  color: black;
+  cursor: default;
+  resize: none;
 }

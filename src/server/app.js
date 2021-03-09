@@ -21,7 +21,7 @@ import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 import { gisLocationQuery } from './gis'
-import { getPendingChanges, updateField } from './sql'
+import { getPendingChanges, updateField, updateData, deletePendingData } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -113,27 +113,59 @@ app.get('/verify', async (req, res, next) => {
   let userStatus = userLoginStatus(req)
   if (userStatus.isVerifier !== true) {
     // redirect the user back to the landing page if they are not a verifier
-    res.redirect(403, '/')
-    return
+    const renderedContent = renderToString(
+      <GeneralError logged_in={userStatus.logged_in} isVerifier={false}
+      errorHeader="403 Denied" errorMessage="You do not have permission to access this page" />
+    );
+    let page = template.replace("<!-- CONTENT -->", renderedContent);
+    res.status(403).send(page);
+    return;
   }
   // todo: need to retrieve current field value in addition to pending value
-  const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) })
-
+  const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) });
   const renderedContent = renderToString(<Verify
     submissions={submissions} logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier}
-  />)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/verify.css')
-  page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>')
-  res.status(200).send(page)
-})
+  />);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/verify.css');
+  page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>');
+  res.status(200).send(page);
+});
+app.post('/verify', async(req,res,next)=>{
+  //check that the required fields were passed
+  let hasRequiredFields = req.body.id!==undefined;
+  hasRequiredFields = hasRequiredFields && req.body.accept!==undefined;
+  hasRequiredFields = hasRequiredFields && req.body.reason!==undefined;
+  if(!hasRequiredFields){
+    res.status(400).send("Missing fields");
+    return;
+  }
+  //update/create new data
+  if(req.body.accept==='true'){
+    let acceptSuccess = await updateData(
+      req.body.id, req.body.updateTarget, req.body.updateChanges
+    ).catch((err)=>{res.status(500).send("")});
+    if(acceptSuccess!==undefined) res.status(200).send("");
+  }
+  else{
+    let deleteSuccess = await deletePendingData(req.body.id).catch((err)=>{res.status(500).send("")});
+    if(deleteSuccess!==undefined) res.status(200).send("");
+  }
+});
+
 
 // Create new account page
 app.get('/newAccount', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   if (userStatus.logged_in === true) {
-    req.redirect(403, '/')  // redirect if the user is already logged in
-    return
+    // redirect if the user is already logged in
+    const renderedContent = renderToString(
+      <GeneralError logged_in={true} isVerifier={userStatus.isVerifier} errorHeader="You are logged in"
+      errorMessage="You cannot create a new account, you already have an account" />
+    );
+    let page = template.replace("<!-- CONTENT -->", renderedContent);
+    res.status(403).send(page);
+    return;
   }
   const renderedContent = renderToString(<NewAccount />)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
@@ -247,10 +279,19 @@ app.post('/newAccount', async (req, res, next) => {
 
 // User login page
 app.get('/login', (req, res, next) => {
-  const renderedContent = renderToString(<Login />)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/login.css')
-  // page = page.replace('<!--SCRIPT-->','<script src="/js/verify.js" defer></script>');
+  let userStatus = userLoginStatus(req);
+  if(userStatus.logged_in===true){
+    const renderedContent = renderToString(
+      <GeneralError logged_in={true} isVerifier={userStatus.isVerifier} errorHeader="Cannot Log In"
+      errorMessage="You are already logged in" />
+    );
+    let page = template.replace("<!-- CONTENT -->", renderedContent);
+    res.status(403).send(page);
+    return;
+  }
+  const renderedContent = renderToString(<Login />);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/login.css');
   res.status(200).send(page)
 })
 
