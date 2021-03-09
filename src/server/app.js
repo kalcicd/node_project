@@ -406,7 +406,9 @@ app.get('/location', async (req, res, next) => {
     city: [],
     school: [],
     local: [],
-    other: []
+    other: [],
+    lat,
+    lng
   }
 
   for (let i = 0; i < locationList.length; i++) {
@@ -441,7 +443,6 @@ app.get('/location', async (req, res, next) => {
       id: `/officeholder/${loc.holderid}`
     })
   }
-
   const renderedContent = renderToString(React.createElement(Location, locationProps))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
