@@ -21,7 +21,7 @@ import Volunteer from '../client/components/volunteer'
 
 import config from '../../config/default.json'
 import { gisLocationQuery } from './gis'
-import { getAllPending, updateField, getLocationProps, getOfficeholderData } from './sql'
+import { getPendingChanges, updateField, getLocationProps, getOfficeholderData } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
 const template = fs.readFileSync(pathToTemplate, 'utf8')
@@ -117,24 +117,8 @@ app.get('/verify', async (req, res, next) => {
     return
   }
   // todo: need to retrieve current field value in addition to pending value
-  // const submissions = await getAllPending().catch((err) => { res.status(500).send(err) })
+  const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) })
 
-  let submissions = [ // temporary submissions list
-    {
-      'title': 'Corvalis',
-      'type': 'location',
-      'reference': 'https://en.wikipedia.org',
-      'id': 0,
-      'updates': [['Location', 'Corvalis', 'Corvallis']]
-    },
-    {
-      'title': 'Corvallis City Council Member',
-      'type': 'office',
-      'reference': 'https://en.wikipedia.org',
-      'id': 0,
-      'updates': [['OfficeTitle', 'City Council Member', 'City Councilor']]
-    }
-  ]
   const renderedContent = renderToString(<Verify
     submissions={submissions} logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier}
   />)
@@ -360,13 +344,13 @@ app.get('/location', async (req, res, next) => {
     return res.status(500).send('500')
   })
   console.log("GIS Response: " + gisResponse)
-  
-  
+
+
   const locationList = await getLocationProps(gisResponse).catch((err) => {
     console.error(err)
     return res.status(500).send('500')
   })
-    
+
   const locationProps = {
 	  federal: [],
 	  state: [],
@@ -376,7 +360,7 @@ app.get('/location', async (req, res, next) => {
 	  local: [],
 	  other: []
   }
-  
+
 	for(var i = 0; i < locationList.length; i++){
 		var loc = locationList[i];
 		//console.log(loc.levelnum);
@@ -397,25 +381,25 @@ app.get('/location', async (req, res, next) => {
 			case 4:
 				prop = locationProps.school;
 				break;
-			case 5:	
+			case 5:
 				prop = locationProps.local;
 				break;
 			default:
 				prop = locationProps.other;
-				break;		  		  
+				break;
 		}
 		prop.push({
 					title: loc.officetitle,
 					name: loc.name,
 					id: "/officeholder/"+loc.holderid
 					});
-	  
+
   }
-  
+
   //console.log(locationProps);
-  
-  
-  
+
+
+
 
   const renderedContent = renderToString(React.createElement(Location, locationProps))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
@@ -425,24 +409,22 @@ app.get('/location', async (req, res, next) => {
 
 app.get('/officeholder/:officeholderId', async (req, res, next) => {
   const { officeholderId } = req.params
-  
+
   const officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     console.error(err)
     return res.status(500).send('500')
   })
-  
+
   console.log(officeholderProps);
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps))
 	let page = template.replace('<!-- CONTENT -->', renderedContent)
 	page = page.replace('<!-- STYLESHEET -->', '/css/officeholder.css')
 	res.status(200).send(page)
-  
+
 })
 
 app.get('/search', (req, res, next) => {
   const address = req.query.q
-  console.log('searching');
-  console.log(address);
   if (address === undefined) { // search query must be present for this endpoint or else we 404
     return res.redirect('/404')
   }
@@ -455,10 +437,8 @@ app.get('/search', (req, res, next) => {
   }).then((response) => {
     const results = response.data.results
     if (results.length === 0) {
-		console.log('Geocoding api results returned nothing');
       return res.redirect('/404') // eventually we want to have this redirect to a separate 'no results found' page.
     }
-	console.log('Geocoding api results returned something');
     const topResult = results[0]
     const { lat, lng } = topResult['geometry']['location']
     res.redirect(`/location?lat=${lat}&lng=${lng}`)
