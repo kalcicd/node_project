@@ -1,5 +1,6 @@
 import React from 'react'
 import Title from './title'
+import SearchBar from './searchBar'
 
 export default function Index (props) {
   let logged_in = (props.logged_in !== undefined) ? props.logged_in : false
@@ -8,13 +9,7 @@ export default function Index (props) {
     <div id='app'>
       <Title logged_in={logged_in} isVerifier={isVerifier} />
       <div id='mainColumn'>
-        <form action='/search' method='GET' id='searchBarWrapper'>
-          <button type='submit' id='searchButton'>
-            <img src='/icons/search.svg' id='searchIcon' />
-          </button>
-          <input name='q' type='text' id='searchBar' className='flexGrow'
-            placeholder='Search by address' />
-        </form>
+        <SearchBar />
         <div id='descriptionText'>
           <p>
             Welcome to the NODE Project - a place to find information about your elected officials and
