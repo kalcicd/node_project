@@ -73,3 +73,6 @@
 .resultItem{
   margin-bottom: 1rem; 
 }
+.noDataMessage{
+  color: #606070;
+}

@@ -11,9 +11,7 @@ export default function Location (props) {
   let levels = ['federal','state','county','city','school','local','other'];
   let results = [];
   levels.forEach((level)=>{
-    if(props[level].length>0){
-      results.push(<LocationLevel level={level} levelResults={props[level]} />);
-	 }
+    results.push(<LocationLevel level={level} levelResults={props[level]} />);
   });
   return (
     <div id='app'>
@@ -51,6 +49,13 @@ export class LocationLevel extends React.Component{
         </li>
       );
     });
+    if(this.props.levelResults.length===0){
+      results.push(
+        <li key="message" className='resultItem noDataMessage'>
+          There are no elections in the database at this level for your location
+        </li>
+      );
+    }
     return(
       <div className='levelWrapper' key={this.props.level}>
         <button className='headerCollapseButton' data-target={bodyId}>
