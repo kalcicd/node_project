@@ -357,28 +357,6 @@ app.get('/logout', (req, res, next) => {
   })
 })
 
-// Handle acceptance of a submission
-app.post('/accept', async (req, res) => {
-  const { type, idFieldName, rowId, updates } = req.body
-  const userStatus = userLoginStatus(req)
-  if (userStatus.isVerifier) {
-    const response = await updateField(type, idFieldName, rowId, updates)
-    console.log(response)
-  } else {
-    res.status(403).send()
-  }
-})
-
-// Handle rejection of a submission
-app.post('/reject', async (req, res) => {
-  const userStatus = userLoginStatus(req)
-  if (userStatus.isVerifier) {
-    // todo: send email to user who submitted and remove pending info from table
-  } else {
-    res.status(403).send()
-  }
-})
-
 // Generate Results page
 app.get('/location', async (req, res, next) => {
   const { lat, lng } = req.query
@@ -446,6 +424,7 @@ app.get('/location', async (req, res, next) => {
   const renderedContent = renderToString(React.createElement(Location, locationProps))
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css')
+  page = page.replace('<!--SCRIPT-->', '<script src="/js/location.js" defer></script>')
   return res.status(200).send(page)
 })
 

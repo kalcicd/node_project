@@ -68,6 +68,39 @@ body{
   font-family: sans-serif;
 }
 
+/* Search Bar */
+#searchBarWrapper{
+  margin: 6rem auto 6rem auto;
+  width: 96%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #e8e8e8;
+  border: 2px solid #888888;
+  border-radius: 3rem;
+  overflow: hidden;
+}
+#searchIcon, #searchBar{
+  margin: 1rem;
+}
+#searchButton{
+  border: none;
+  background: rgba(0,0,0,0);
+  padding: 0 0.4rem;
+}
+#searchIcon{
+  height: 4rem;
+  width: 4rem;
+  color: #888888;
+}
+#searchBar{
+  color: #3a3a3a;
+  height: 3.5rem;
+  border: none;
+  font-size: 1.7rem;
+  background-color: inherit;
+}
+
 /* General classes */
 button{
   border: 1px solid lightgray;
@@ -90,7 +123,6 @@ button:hover,button:active{
   text-align: center;
   margin-top: 1rem;
   margin-bottom: 0.3rem;
-  /*text-decoration: underline;*/
 }
 
 /* Styling for desktop site */

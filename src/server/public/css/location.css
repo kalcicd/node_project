@@ -1,55 +1,75 @@
-#searchBarWrapper {
-    margin-top: 6rem;
-    margin-bottom: 12rem;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    background-color: #e8e8e8;
-    border: 2px solid #888888;
-    border-radius: 3rem;
-}
-#resultsTitle {
-    color: inherit;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: x-large;
-    text-align: center;
-}
-
 #mapContent {
-    align-content: center;
+  width: 95%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+#mapsPhoto{
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid black;
 }
 
-#searchIcon, #searchBar {
-    margin: 1rem;
+#locationResults{
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
 }
-
-#searchIcon {
-    height: 4rem;
-    width: 4rem;
-    color: #888888;
-    background: rgba(0,0,0,0);
+.levelWrapper{
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
 }
-
-#searchBar {
-    color: #3a3a3a;
-    height: 3.5rem;
-    border: none;
-    font-size: 1.7rem;
-    background-color: inherit;
+.levelHeader{
+  margin: 0 0 0 1rem;
+  font-size: 1.6rem;
 }
-
-#descriptionText {
-    font-size: 1.3rem;
-    line-height: 2.1rem;
-    font-family: sans-serif;
-    font-weight: bold;
+.headerSpacer{
+  flex-grow: 1;
+  flex-shrink: 1;
 }
-
-#descriptionText > p {
-    text-align: center;
+.headerCollapseButton{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: max-content;
+  background: rgba(0,0,0,0);
+  border: none;
+  padding: 0;
+  border-radius: 0;
 }
-
-#locationResults > h3 {
-    color: #3a3a3a;
+.headerCollapseButton.collapsed{
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid black;
+}
+.headerCollapseButton:not(.collapsed) .collapsedImage{
+  display: none;
+}
+.headerCollapseButton.collapsed .expandedImage{
+  display: none;
+}
+.expandedImage,.collapsedImage{
+  width: 0.8rem;
+  height: 0.8rem;
+  margin: 0.4rem;
+}
+.expandedImage>polygon,.collapseImage>polygon{
+  fill: black;
+  width: 100%;
+  height: 100%;
+}
+.levelResults{
+  font-size: 1.3rem;
+  list-style: none;
+  margin: 0;
+}
+.levelResults.collapsed{
+  height: 0;
+  visibility: hidden;
+}
+.levelResults.collapsed .resultItem{
+  margin-bottom: 0;
+}
+.resultItem{
+  margin-bottom: 1rem; 
 }
