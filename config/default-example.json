@@ -3,6 +3,10 @@
     "apiUrl": "https://maps.googleapis.com/maps/api/geocode/json",
     "apiKey": "KEY HERE"
   },
+  "mapsStatic": {
+    "apiUrl": "https://maps.googleapis.com/maps/api/staticmap",
+    "apiKey": "KEY HERE"
+  },
   "sessionSecret": {
     "secret": "SECRET HERE"
   },

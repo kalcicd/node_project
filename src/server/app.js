@@ -27,7 +27,8 @@ import {
   updateData,
   deletePendingData,
   getOfficeholderData,
-  getLocationProps
+  getLocationProps,
+  addPendingData
 } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
@@ -62,11 +63,11 @@ app.use(session({
 
 const userLoginStatus = (req) => {
   // extracts the relevant user data from the active session and returns it in a dict
-  let statusDict = { 'logged_in': false, 'isVerifier': false }
+  let statusDict = { 'loggedIn': false, 'isVerifier': false }
   if (req.session === undefined || req.session.user === undefined) {
     return statusDict
   }
-  statusDict['logged_in'] = true
+  statusDict['loggedIn'] = true
   statusDict['username'] = req.session.user
   if (req.session.isVerifier === undefined || req.session.isVerifier === false) {
     return statusDict
@@ -78,7 +79,7 @@ const userLoginStatus = (req) => {
 app.get('/', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <Index logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier} />
+    <Index logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/index.css')
@@ -88,7 +89,7 @@ app.get('/', (req, res, next) => {
 app.get('/about', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <AboutUs logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier} />
+    <AboutUs logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/aboutus.css')
@@ -98,7 +99,7 @@ app.get('/about', (req, res, next) => {
 app.get('/volunteer', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <Volunteer logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier} />
+    <Volunteer logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css')
@@ -108,7 +109,7 @@ app.get('/volunteer', (req, res, next) => {
 app.get('/developers', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <Developers logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier} />
+    <Developers logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/developers.css')
@@ -121,7 +122,7 @@ app.get('/verify', async (req, res, next) => {
   if (userStatus.isVerifier !== true) {
     // redirect the user back to the landing page if they are not a verifier
     const renderedContent = renderToString(
-      <GeneralError logged_in={userStatus.logged_in} isVerifier={false}
+      <GeneralError logged_in={userStatus.loggedIn} isVerifier={false}
         errorHeader='403 Denied' errorMessage='You do not have permission to access this page' />
     )
     let page = template.replace('<!-- CONTENT -->', renderedContent)
@@ -131,7 +132,7 @@ app.get('/verify', async (req, res, next) => {
   // todo: need to retrieve current field value in addition to pending value
   const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) })
   const renderedContent = renderToString(<Verify
-    submissions={submissions} logged_in={userStatus.logged_in} isVerifier={userStatus.isVerifier}
+    submissions={submissions} logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier}
   />)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/verify.css')
@@ -162,7 +163,7 @@ app.post('/verify', async (req, res, next) => {
 // Create new account page
 app.get('/newAccount', (req, res, next) => {
   let userStatus = userLoginStatus(req)
-  if (userStatus.logged_in === true) {
+  if (userStatus.loggedIn === true) {
     // redirect if the user is already logged in
     const renderedContent = renderToString(
       <GeneralError logged_in isVerifier={userStatus.isVerifier} errorHeader='You are logged in'
@@ -289,7 +290,7 @@ app.post('/newAccount', async (req, res, next) => {
 // User login page
 app.get('/login', (req, res, next) => {
   let userStatus = userLoginStatus(req)
-  if (userStatus.logged_in === true) {
+  if (userStatus.loggedIn === true) {
     const renderedContent = renderToString(
       <GeneralError logged_in isVerifier={userStatus.isVerifier} errorHeader='Cannot Log In'
         errorMessage='You are already logged in' />
@@ -357,6 +358,25 @@ app.get('/logout', (req, res, next) => {
   })
 })
 
+// Handle submission of pending data
+app.post('/submit', async (req, res) => {
+  const userStatus = userLoginStatus(req)
+  const { type, referenceLink, referenceId, updateChanges } = req.body
+  for (const field of ['type', 'referenceLink', 'referenceId']) {
+    if (req.body[field] === undefined) {
+      return res.status(400).send(`Required field '${field}' is missing`)
+    }
+  }
+  if (userStatus.isVerifier) {
+    await addPendingData(type, userStatus['username'], referenceLink, referenceId, updateChanges).catch((err) => {
+      console.error(err)
+      return res.status(400).send(err)
+    })
+    return res.status(200).send()
+  } else {
+    return res.status(403).send()
+  }
+})
 // Generate Results page
 app.get('/location', async (req, res, next) => {
   const { lat, lng } = req.query

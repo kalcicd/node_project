@@ -7,7 +7,7 @@ const databasePool = new Pool({
   password: config.postgresql.pass
 })
 
-function escapeSql (str) {
+const escapeSql = (str) => {
   // todo: cover other cases
   let escapedStr = str.replace('\'', '\'\'')
   escapedStr = '\'' + escapedStr + '\''
@@ -19,27 +19,53 @@ const tableDict = {
     idName: 'electionid',
     tableName: 'elections',
     pendingIdName: 'electionchangeid',
-    pendingTableName: 'pendingelectionchanges'
+    pendingTableName: 'pendingelectionchanges',
+    updatableFields: ['newlocation', 'newdate']
   },
   location: {
     idName: 'locationid',
     tableName: 'locations',
     pendingIdName: 'locationchangeid',
-    pendingTableName: 'pendinglocationchanges'
+    pendingTableName: 'pendinglocationchanges',
+    updatableFields: ['newname']
   },
   office: {
     idName: 'officeid',
     tableName: 'offices',
     pendingIdName: 'officechangeid',
-    pendingTableName: 'pendingofficechanges'
+    pendingTableName: 'pendingofficechanges',
+    updatableFields: ['newlocationid', 'newholder', 'newnextelection', 'newtitle', 'newtermstart', 'newtermend']
   },
   officeholder: {
     idName: 'holderid',
     tableName: 'officeholders',
     pendingIdName: 'officeholderchangeid',
-    pendingTableName: 'pendingofficeholderchanges'
+    pendingTableName: 'pendingofficeholderchanges',
+    updatableFields: ['newname', 'newphone', 'newemail', 'newmeeting', 'newsitelink']
   }
 }
+
+const addPendingData = (type, username, referenceLink, referenceId, updateChanges) => new Promise(async (resolve, reject) => {
+  /* Pushes a new data change request to the appropriate pending database tables */
+  const schema = tableDict[type]
+  const updateKeys = Object.keys(updateChanges)
+  const quotedValues = []
+
+  updateKeys.forEach((key) => {
+    if (!schema.updatableFields.includes(key)) {
+      reject(Error(`Field '${key}' is not in the schema`))
+      return
+    }
+    quotedValues.push(`'${updateChanges[key]}'`)
+  })
+  const query = `INSERT INTO ${schema.pendingTableName}
+                 (username, referencelink, ${schema.idName}, ${updateKeys.join(', ')})
+                 VALUES ('${username}', '${referenceLink}', '${referenceId}', ${quotedValues.join(', ')})`
+  console.log('QUERY: ', query)
+  const response = await databasePool.query(query).catch((err) => reject(err))
+  console.log('RESPONSE: ', response)
+  resolve(response)
+})
 
 const getFormattedUpdates = (row, type) => {
   /* Takes a row from a database query and the type of update it is associated with and returns an
@@ -117,12 +143,13 @@ const updateField = (type, rowId, updates) => new Promise(async (resolve, reject
   /* Takes a type, rowId, and an object containing the updates to be made to a row in a table.
    Constructs and sends an query to update the given fields */
   let updateStrings = []
+  const schema = tableDict[type]
   updates.forEach((elem) => {
     let fieldName = elem[0]
     let value = escapeSql(elem[1])
     updateStrings.push(`${fieldName} = ${value}`)
   })
-  const queryString = `UPDATE ${tableDict[type].tableName} SET ${updateStrings.join(',')} WHERE ${tableDict[type].idName} = ${rowId}`
+  const queryString = `UPDATE ${schema.tableName} SET ${updateStrings.join(',')} WHERE ${schema.idName} = ${rowId}`
   const response = await databasePool.query(queryString).catch((err) => reject(err))
   console.log(response)
   resolve(response)
@@ -143,11 +170,11 @@ const getPendingChanges = () => new Promise(async (resolve, reject) => {
       allPending.push({
         'title': getTitle(row, type),
         'type': type,
-        'id': type + '_' + row[tableDict[type]['pendingIdName']],
-        'isNew': row[tableDict[type]['idName']] === null,
+        'id': type + '_' + row[pendingIdName],
+        'isNew': row[idName] === null,
         'reference': row['referencelink'],
         'updates': getFormattedUpdates(row, type),
-        'updateTarget': row[tableDict[type]['idName']]
+        'updateTarget': row[idName]
       })
     }
   }
@@ -172,11 +199,10 @@ const deletePendingData = (updateIdStr) => new Promise(async (resolve, reject) =
   let type = updateIdStr.split('_')[0]
   let id = updateIdStr.split('_')[1]
   // get table and id column names
-  let tableName = tableDict[type]['pendingTableName']
-  let idField = tableDict[type]['pendingIdName']
+  const { pendingTableName, pendingIdName } = tableDict[type]
   // todo: check for errors before sending query
   // send delete request
-  let deleteQuery = `DELETE FROM ${tableName} WHERE ${idField} = ${id}`
+  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`
   const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) })
   resolve(result)
 })
@@ -245,4 +271,13 @@ const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => 
 
   resolve(officeholderVar)
 })
-export { updateField, getPendingChanges, getLocationProps, getOfficeholderData, updateData, deletePendingData }
+
+export {
+  updateField,
+  getPendingChanges,
+  getLocationProps,
+  getOfficeholderData,
+  updateData,
+  deletePendingData,
+  addPendingData
+}
