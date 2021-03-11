@@ -52,7 +52,7 @@ export class LocationLevel extends React.Component{
     if(this.props.levelResults.length===0){
       results.push(
         <li key="message" className='resultItem noDataMessage'>
-          There are no elections in the database at this level for your location
+          There are no officeholders in our database at this level for your location
         </li>
       );
     }

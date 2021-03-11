@@ -8,6 +8,13 @@ import SearchBar from './searchBar'
  * @param {Object} props
  */
 export default function Officeholder (props) {
+  let term = `${props.termStart} - ${props.termEnd}`
+  for (const propName in props) {
+    if (props[propName] === null && (propName === 'termStart' || propName === 'termEnd')) {
+      term = null
+    }
+  }
+
   return (
     <div id='app'>
       <Title />
@@ -17,36 +24,38 @@ export default function Officeholder (props) {
           <h2>{props.officeTitle} {props.officeholderName}'s Information:</h2>
         </div>
         <div id='officeholderInfo'>
-          <h3 className='infoHeader'>Term</h3>
-          <div className='infoDiv'>{props.termStart} - {props.termEnd}</div>
-
-          <h3 className='infoHeader'>Next Election Date</h3>
-          <div className='infoDiv'>{props.nextElectionDate}</div>
-
-          <h3 className='infoHeader'>Phone Contact</h3>
-          <div className='infoDiv'>{props.phone}</div>
-
-          <h3 className='infoHeader'>Email Contact</h3>
-          <div className='infoDiv'>{props.email}</div>
-          
-          <h3 className='infoHeader'>Meetings</h3>
-          <div className='infoDiv'>{props.meetings}</div>
-        </div>
-        <div className='reportButtonWrapper'>
-          <button className='reportButton'>
-            Any information incorrect? Submit an info update request here.
-          </button>
-        </div>
-        <div id='mapContent'>
-          <h3 id='mapTitle'>District Map</h3>
-          <img src='/icons/mapsEmbed.png' id='mapsPhoto' />
-        </div>
-        <div className='reportButtonWrapper'>
-          <button className='reportButton'>
-            Map information incorrect? Submit an info update request here.
-          </button>
+          <OfficeholderProperty title={'Term'} value={term} />
+          <OfficeholderProperty title={'Next Election Date'} value={props.nextElectionDate} />
+          <OfficeholderProperty title={'Phone Contact'} value={props.phone} />
+          <OfficeholderProperty title={'Email Contact'} value={props.email} />
+          <OfficeholderProperty title={'Meetings'} value={props.meetings} />
+          <div id='mapContent'>
+            <h3 className='infoHeader'>District Map</h3>
+            <img src='/icons/mapsEmbed.png' id='mapsPhoto' />
+          </div>
         </div>
       </div>
     </div>
   )
+}
+
+export class OfficeholderProperty extends React.Component {
+  constructor (props) {
+    super(props)
+    this.submitReport = this.submitReport.bind(this)
+  }
+  submitReport () {
+    console.log('boop.')
+  }
+  render () {
+    const isUnavailable = (this.props.value === null)
+    const value = (isUnavailable) ? 'Data Unavailable' : this.props.value
+    return (
+      <div id='officeholderProperty'>
+        <h3 className='infoHeader'>{this.props.title}</h3>
+        <button className='reportButton' onClick={this.submitReport}>Incorrect or Unavailable?</button>
+        <div className='infoDiv'>{value}</div>
+      </div>
+    )
+  }
 }
