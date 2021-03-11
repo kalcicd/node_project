@@ -7,38 +7,73 @@ const databasePool = new Pool({
   password: config.postgresql.pass
 })
 
+const escapeSql = (str) => {
+  // todo: cover other cases
+  let escapedStr = str.replace('\'', '\'\'')
+  escapedStr = '\'' + escapedStr + '\''
+  return escapedStr
+}
+
 const tableDict = {
   election: {
     idName: 'electionid',
     tableName: 'elections',
     pendingIdName: 'electionchangeid',
-    pendingTableName: 'pendingelectionchanges'
+    pendingTableName: 'pendingelectionchanges',
+    updatableFields: ['newlocation', 'newdate']
   },
   location: {
     idName: 'locationid',
     tableName: 'locations',
     pendingIdName: 'locationchangeid',
-    pendingTableName: 'pendinglocationchanges'
+    pendingTableName: 'pendinglocationchanges',
+    updatableFields: ['newname']
   },
   office: {
     idName: 'officeid',
     tableName: 'offices',
     pendingIdName: 'officechangeid',
-    pendingTableName: 'pendingofficechanges'
+    pendingTableName: 'pendingofficechanges',
+    updatableFields: ['newlocationid', 'newholder', 'newnextelection', 'newtitle', 'newtermstart', 'newtermend']
   },
   officeholder: {
     idName: 'holderid',
     tableName: 'officeholders',
     pendingIdName: 'officeholderchangeid',
-    pendingTableName: 'pendingofficeholderchanges'
+    pendingTableName: 'pendingofficeholderchanges',
+    updatableFields: ['newname', 'newphone', 'newemail', 'newmeeting', 'newsitelink']
   }
 }
 
+const addPendingData = (type, username, referenceLink, referenceId, updateChanges) => new Promise(async (resolve, reject) => {
+  /* Pushes a new data change request to the appropriate pending database tables */
+  const schema = tableDict[type]
+  const updateKeys = Object.keys(updateChanges)
+  const quotedValues = []
+
+  updateKeys.forEach((key) => {
+    if (!schema.updatableFields.includes(key)) {
+      reject(Error(`Field '${key}' is not in the schema`))
+      return
+    }
+    quotedValues.push(`'${updateChanges[key]}'`)
+  })
+  const query = `INSERT INTO ${schema.pendingTableName}
+                 (username, referencelink, ${schema.idName}, ${updateKeys.join(', ')})
+                 VALUES ('${username}', '${referenceLink}', '${referenceId}', ${quotedValues.join(', ')})`
+  console.log('QUERY: ', query)
+  const response = await databasePool.query(query).catch((err) => reject(err))
+  console.log('RESPONSE: ', response)
+  resolve(response)
+})
+
 const getFormattedUpdates = (row, type) => {
+  /* Takes a row from a database query and the type of update it is associated with and returns an
+  array of updates in proper formatting for the frontend */
   const updateList = []
   if (type === 'election') {
     if (row['newdate'] !== null) {
-      updateList.push(['datetime', row['datetime'], row['newdate']])
+      updateList.push(['datetime', String(row['datetime']), String(row['newdate'])])
     }
     // this may result in a failure to update if new locationid does not already exist
     if (row['newLocation'] !== null) {
@@ -46,7 +81,7 @@ const getFormattedUpdates = (row, type) => {
     }
   } else if (type === 'location') {
     if (row['newname'] !== null) {
-      updateList.push(['name', row['name'], row['newname']])
+      updateList.push(['name', row['locationname'], row['newname']])
     }
   } else if (type === 'office') {
     if (row['newlocationid'] !== null) {
@@ -88,53 +123,88 @@ const getFormattedUpdates = (row, type) => {
 }
 
 const getTitle = (row, type) => {
+  /* Takes a row from a database query and the type of query it is and returns a title to be
+  displayed on the verifier interface */
   if (type === 'location') {
-    return row['locationName']
+    return (row['locationid'] !== null) ? row['locationname'] : row['newname']
   }
   if (type === 'election') {
-    return `Election id: ${row[tableDict[type].idName]}`
+    return (row['electionid'] !== null) ? `Election id: ${row['electionid']}` : 'New Election'
   }
   if (type === 'office') {
-    return row['officetitle']
+    return (row['officeid'] !== null) ? row['officetitle'] : row['newtitle']
   }
   if (type === 'officeholder') {
-    return row['name']
+    return (row['holderid']) ? row['name'] : row['newname']
   }
 }
 
-// Takes a type, rowId, and an object containing the updates to be made to a row in a table.
-// Constructs and sends an query to update the given fields
 const updateField = (type, rowId, updates) => new Promise(async (resolve, reject) => {
+  /* Takes a type, rowId, and an object containing the updates to be made to a row in a table.
+   Constructs and sends an query to update the given fields */
   let updateStrings = []
-  updates.forEach((field, newValue) => updateStrings.push(`${field}= ${newValue}`))
-  const queryString = 'UPDATE $1 SET $2 WHERE $3 = $4'
-  const response = await databasePool.query(
-    queryString, [tableDict[type].tableName, updateStrings.join(', '), tableDict[type].idName, rowId]
-  ).catch((err) => reject(err))
+  const schema = tableDict[type]
+  updates.forEach((elem) => {
+    let fieldName = elem[0]
+    let value = escapeSql(elem[1])
+    updateStrings.push(`${fieldName} = ${value}`)
+  })
+  const queryString = `UPDATE ${schema.tableName} SET ${updateStrings.join(',')} WHERE ${schema.idName} = ${rowId}`
+  const response = await databasePool.query(queryString).catch((err) => reject(err))
+  console.log(response)
   resolve(response)
 })
 
-// Retrieves all entries from pending data tables to be displayed to verifier
 const getPendingChanges = () => new Promise(async (resolve, reject) => {
+  /* Retrieves all entries from pending data tables to be displayed to verifier */
   const allPending = []
   for (const type of Object.keys(tableDict)) {
     const { idName, tableName, pendingIdName, pendingTableName } = tableDict[type]
-    const query = `SELECT * FROM ${tableName} as a JOIN ${pendingTableName} as b ON a.${idName} = b.${pendingIdName}`
+    const query = `SELECT * FROM ${tableName} AS a JOIN ${pendingTableName} AS b ON a.${idName} = b.${idName}`
     const { rows } = await databasePool.query(query).catch((err) => {
       reject(err)
     })
 
+    // format queried data into the correct structure for the frontend
     for (const row of rows) {
       allPending.push({
         'title': getTitle(row, type),
         'type': type,
-        'id': row[tableDict[type].idName],
+        'id': type + '_' + row[pendingIdName],
+        'isNew': row[idName] === null,
         'reference': row['referencelink'],
-        'updates': getFormattedUpdates(row, type)
+        'updates': getFormattedUpdates(row, type),
+        'updateTarget': row[idName]
       })
     }
   }
   resolve(allPending)
+})
+
+const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(async (resolve, reject) => {
+  /* Updates data or creates new entry based on the updateIdStr and deletes the pending entry from
+  the database */
+  // todo: error handling
+  let updateType = updateIdStr.split('_')[0]
+  let updateChangesArr = updateChanges.split(',').map(elem => elem.split(':'))
+  await updateField(updateType, updateTarget, updateChangesArr).catch((err) => { reject(err) })
+
+  await deletePendingData(updateIdStr).catch((err) => { reject(err) })
+  resolve(null)
+})
+
+const deletePendingData = (updateIdStr) => new Promise(async (resolve, reject) => {
+  /* Deletes a pending data row from the database */
+  // extract the id and type from the given string
+  let type = updateIdStr.split('_')[0]
+  let id = updateIdStr.split('_')[1]
+  // get table and id column names
+  const { pendingTableName, pendingIdName } = tableDict[type]
+  // todo: check for errors before sending query
+  // send delete request
+  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`
+  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) })
+  resolve(result)
 })
 
 const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) => {
@@ -202,4 +272,12 @@ const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => 
   resolve(officeholderVar)
 })
 
-export { updateField, getPendingChanges, getLocationProps, getOfficeholderData }
+export {
+  updateField,
+  getPendingChanges,
+  getLocationProps,
+  getOfficeholderData,
+  updateData,
+  deletePendingData,
+  addPendingData
+}
