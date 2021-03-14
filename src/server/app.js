@@ -141,42 +141,49 @@ app.get('/verify', async (req, res, next) => {
 })
 app.post('/verify', async (req, res, next) => {
   // check that the required fields were passed
-  let hasRequiredFields = req.body.id !== undefined
-  hasRequiredFields = hasRequiredFields && req.body.accept !== undefined
-  hasRequiredFields = hasRequiredFields && req.body.reason !== undefined
+  let hasRequiredFields = req.body.id !== undefined;
+  hasRequiredFields = hasRequiredFields && req.body.accept !== undefined;
+  hasRequiredFields = hasRequiredFields && req.body.reason !== undefined;
   if (!hasRequiredFields) {
-    res.status(400).send('Missing fields')
-    return
+    res.status(400).send('Missing fields');
+    return;
+  }
+  //check that the user is a verifier
+  let userStatus = userLoginStatus(req);
+  if(userStatus.isVerifier === false){
+    res.status(403).send('Access denied');
+    return;
   }
   // update/create new data
   if (req.body.accept === 'true') {
     let acceptSuccess = await updateData(
       req.body.id, req.body.updateTarget, req.body.updateChanges
     ).catch(() => { res.status(500).send('') })
-    if (acceptSuccess !== undefined) res.status(200).send('')
-  } else {
-    let deleteSuccess = await deletePendingData(req.body.id).catch(() => { res.status(500).send('') })
-    if (deleteSuccess !== undefined) res.status(200).send('')
+    if (acceptSuccess !== undefined) res.status(200).send('');
+  }
+  else {
+    let deleteSuccess = await deletePendingData(req.body.id).catch(() => { res.status(500).send('') });
+    if (deleteSuccess !== undefined) res.status(200).send('');
   }
 })
 
 // Create new account page
 app.get('/newAccount', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   if (userStatus.loggedIn === true) {
     // redirect if the user is already logged in
     const renderedContent = renderToString(
       <GeneralError logged_in isVerifier={userStatus.isVerifier} errorHeader='You are logged in'
         errorMessage='You cannot create a new account, you already have an account' />
     )
-    let page = template.replace('<!-- CONTENT -->', renderedContent)
-    res.status(403).send(page)
-    return
+    let page = template.replace('<!-- CONTENT -->', renderedContent);
+    res.status(403).send(page);
+    return;
   }
   const renderedContent = renderToString(<NewAccount />)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
-  res.status(200).send(page)
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css');
+  res.status(200).send(page);
 })
 // Handle new account creation
 app.post('/newAccount', async (req, res, next) => {
