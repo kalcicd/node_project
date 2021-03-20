@@ -2,11 +2,9 @@ import React from 'react'
 import Title from './title'
 
 export default function Volunteer (props) {
-  let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
-  let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
   return (
     <div id="app">
-      <Title logged_in={logged_in} isVerifier={isVerifier}/>
+      <Title user={props.user} />
       <div id="mainColumn">
         <h2 className="pageHeader">Volunteer Sign Up</h2>
         <form action="/signup" method="POST" id="signUpForm">

@@ -10,11 +10,9 @@ export default function Verify (props) {
   } else {
     forVerification.push(<div className='noSubmissionMessage'>There are no submissions to review</div>);
   }
-  let loggedIn = (props.logged_in !== undefined) ? props.logged_in : false;
-  let isVerifier = (props.is_verifier !== undefined) ? props.is_verifier : false;
   return (
     <div id='app'>
-      <Title logged_in={loggedIn} is_verifier={isVerifier} />
+      <Title user={props.user} />
       <div id='mainColumn'>
         <div id='verifierColumn'>
           {forVerification}

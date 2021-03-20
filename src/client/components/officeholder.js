@@ -10,7 +10,7 @@ import SearchBar from './searchBar'
 export default function Officeholder (props) {
   return (
     <div id='app'>
-      <Title />
+      <Title user={props.user} />
       <div id='mainColumn'>
         <SearchBar />
         <div className='pageHeader'>

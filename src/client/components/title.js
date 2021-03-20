@@ -1,8 +1,7 @@
 import React from 'react'
 
 export default function Title (props) {
-  let logged_in = (props.logged_in!=undefined)?props.logged_in:false;
-  let isVerifier = (props.isVerifier!=undefined)?props.isVerifier:false;
+  let user = (props.user!==undefined)?props.user:{"loggedIn":false,"isVerifier":false};
   return (
     <div id='titleAndHeaderBar'>
       <div id='titleBar'>
@@ -10,7 +9,7 @@ export default function Title (props) {
         <a id='title' href='/'>NODE Project</a>
       </div>
       <div className="flexGrow" />
-      <HeaderBar logged_in={logged_in} isVerifier={isVerifier}/>
+      <HeaderBar user={user}/>
     </div>
   )
 }
@@ -19,23 +18,51 @@ export function HeaderBar (props) {
   const titleLinks = [
     {'name':'About Us', 'url':'/about'},
     {'name':'Developers', 'url':'/developers'}
-  ]
+  ];
   //check if the user is logged in and if they are a verifier
-  if(props.hasOwnProperty("logged_in") && props.logged_in===true){
-    if(props.hasOwnProperty("isVerifier") && props.isVerifier===true){
+  if(props.user.loggedIn===true){
+    if(props.user.isVerifier===true){
 	   titleLinks.push({'name':"Verify Submissions",'url':"/verify"});
     }
-    titleLinks.push({'name':"Log Out",'url':"/logout"});
+    titleLinks.push({
+      'name':props.user.username,'dropdown':[
+        {'name':"Account Information",'url':"/aboutme"},
+        {'name':"Log Out",'url':"/logout"}
+      ]
+    });
   }
   else{
     titleLinks.push({'name':"Create Account",'url':"/newAccount"});
   	 titleLinks.push({'name':"Log In",'url':"/login"});
   }
-  const titleElems = []
+  const titleElems = [];
   titleLinks.forEach((link, i) => {
-    titleElems.push(<a href={link['url']} className='headerLink' key={i}>{link['name']}</a>)
+    titleElems.push(<HeaderLink link={link} key={i} />);
   })
   return (
     <div id='headerBar' className="mobileHidden">{titleElems}</div>
+  )
+}
+
+export function HeaderLink(props){
+  if(props.link===undefined){
+    return null; //return nothing if no data was passed
+  }
+  if(props.link.dropdown!==undefined){
+    let dropdownOptions = [];
+    props.link.dropdown.forEach((option,i)=>{
+      dropdownOptions.push(<HeaderLink link={option} key={i} />);
+    });
+    return (
+      <div className="headerDropdown">
+        <div className="headerDropdownTitle">{props.link.name}</div>
+        <div className="headerDropdownOptions">
+          {dropdownOptions}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <a href={props.link.url} className="headerLink">{props.link.name}</a>
   )
 }

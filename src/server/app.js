@@ -63,33 +63,33 @@ app.use(session({
 
 const userLoginStatus = (req) => {
   // extracts the relevant user data from the active session and returns it in a dict
-  let statusDict = { 'loggedIn': false, 'isVerifier': false }
+  let statusDict = { 'loggedIn': false, 'isVerifier': false };
   if (req.session === undefined || req.session.user === undefined) {
-    return statusDict
+    return statusDict;
   }
-  statusDict['loggedIn'] = true
-  statusDict['username'] = req.session.user
-  if (req.session.isVerifier === undefined || req.session.isVerifier === false) {
-    return statusDict
+  statusDict['loggedIn'] = true;
+  statusDict['username'] = req.session.user;
+  if (req.session.isVerifier !== true) {
+    return statusDict;
   }
-  statusDict['isVerifier'] = true
-  return statusDict
+  statusDict['isVerifier'] = true;
+  return statusDict;
 }
 
 app.get('/', (req, res, next) => {
-  let userStatus = userLoginStatus(req)
+  let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
-    <Index logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
+    <Index user={userStatus} />
   )
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/index.css')
-  res.status(200).send(page)
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/index.css');
+  res.status(200).send(page);
 })
 
 app.get('/about', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <AboutUs logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
+    <AboutUs user={userStatus} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/aboutus.css')
@@ -99,7 +99,7 @@ app.get('/about', (req, res, next) => {
 app.get('/volunteer', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <Volunteer logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
+    <Volunteer user={userStatus} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css')
@@ -109,7 +109,7 @@ app.get('/volunteer', (req, res, next) => {
 app.get('/developers', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   const renderedContent = renderToString(
-    <Developers logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
+    <Developers user={userStatus} />
   )
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/developers.css')
@@ -122,8 +122,8 @@ app.get('/verify', async (req, res, next) => {
   if (userStatus.isVerifier !== true) {
     // redirect the user back to the landing page if they are not a verifier
     const renderedContent = renderToString(
-      <GeneralError logged_in={userStatus.loggedIn} isVerifier={false}
-        errorHeader='403 Denied' errorMessage='You do not have permission to access this page' />
+      <GeneralError user={userStatus} errorHeader='403 Denied'
+        errorMessage='You do not have permission to access this page' />
     )
     let page = template.replace('<!-- CONTENT -->', renderedContent)
     res.status(403).send(page)
@@ -131,9 +131,7 @@ app.get('/verify', async (req, res, next) => {
   }
   // todo: need to retrieve current field value in addition to pending value
   const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) })
-  const renderedContent = renderToString(<Verify
-    submissions={submissions} logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier}
-  />)
+  const renderedContent = renderToString(<Verify submissions={submissions} user={userStatus} />)
   let page = template.replace('<!-- CONTENT -->', renderedContent)
   page = page.replace('<!-- STYLESHEET -->', '/css/verify.css')
   page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>')
@@ -173,14 +171,14 @@ app.get('/newAccount', (req, res, next) => {
   if (userStatus.loggedIn === true) {
     // redirect if the user is already logged in
     const renderedContent = renderToString(
-      <GeneralError logged_in isVerifier={userStatus.isVerifier} errorHeader='You are logged in'
+      <GeneralError user={userStatus} errorHeader='You are logged in'
         errorMessage='You cannot create a new account, you already have an account' />
     )
     let page = template.replace('<!-- CONTENT -->', renderedContent);
     res.status(403).send(page);
     return;
   }
-  const renderedContent = renderToString(<NewAccount />)
+  const renderedContent = renderToString(<NewAccount />);
   let page = template.replace('<!-- CONTENT -->', renderedContent);
   page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css');
   res.status(200).send(page);
@@ -188,10 +186,10 @@ app.get('/newAccount', (req, res, next) => {
 // Handle new account creation
 app.post('/newAccount', async (req, res, next) => {
   function accountCreationFailed (reason) {
-    const renderedContent = renderToString(<NewAccount hasError errorReason={reason} />)
-    let page = template.replace('<!-- CONTENT -->', renderedContent)
-    page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
-    res.status(400).send(page)
+    const renderedContent = renderToString(<NewAccount hasError={true} errorReason={reason} />);
+    let page = template.replace('<!-- CONTENT -->', renderedContent);
+    page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css');
+    res.status(400).send(page);
   }
 
   // check that all required fields were passed
@@ -201,41 +199,41 @@ app.post('/newAccount', async (req, res, next) => {
   hasRequiredFields = hasRequiredFields && (req.body['pass'] !== undefined && req.body['pass'] !== '')
   hasRequiredFields = hasRequiredFields && (req.body['pass2'] !== undefined && req.body['pass2'] !== '')
   if (!hasRequiredFields) {
-    accountCreationFailed('Not all required fields were filled')
-    return
+    accountCreationFailed('Not all required fields were filled');
+    return;
   }
   // check username is unique
   let existingUser = await databasePool.query(
     'SELECT * FROM Users WHERE username=$1', [req.body.username]
   )
   if (existingUser['rows'].length > 0) {
-    accountCreationFailed('The username is already taken')
-    return
+    accountCreationFailed('The username is already taken');
+    return;
   }
   // check that the password and confirm password field match
   if (req.body.pass !== req.body['pass2']) {
-    accountCreationFailed('The password and confirm password fields do not match')
-    return
+    accountCreationFailed('The password and confirm password fields do not match');
+    return;
   }
   // hash password for storage in the database
   bcrypt.hash(req.body.pass, bcryptSaltRounds, (err, hash) => {
     if (err) { // show an error page to the user if hashing the password failed
       // todo: log error output to console or file
       const renderedContent = renderToString(<GeneralError errorHeader='500 Internal Server Error'
-        errorMessage='An error occurred while creating the user, please try again or contact an administrator if the problem persists' />)
-      let page = template.replace('<!-- CONTENT -->', renderedContent)
-      res.status(500).send(page)
+        errorMessage='An error occurred while creating the user, please try again or contact an administrator if the problem persists' />);
+      let page = template.replace('<!-- CONTENT -->', renderedContent);
+      res.status(500).send(page);
     } else {
       /*
         newUserQuery is a string which is passed to the databasePool.query function
         newUserData is a list which contains the data associated with the query in the order specified
         in newUserQuery
       */
-      let newUserQuery = 'INSERT INTO Users (username,email,passwd'
-      let newUserData = [req.body['username'], req.body['email'], hash]
+      let newUserQuery = 'INSERT INTO Users (username,email,passwd';
+      let newUserData = [req.body['username'], req.body['email'], hash];
       if (req.body['name'] !== '') { // check if the Name field was filled
-        newUserQuery += ',name'
-        newUserData.push(req.body.name)
+        newUserQuery += ',name';
+        newUserData.push(req.body.name);
       }
       if (req.body['phone'] !== '') { // check if the Phone Number field was filled
         newUserQuery += ',phone'
@@ -299,7 +297,7 @@ app.get('/login', (req, res, next) => {
   let userStatus = userLoginStatus(req)
   if (userStatus.loggedIn === true) {
     const renderedContent = renderToString(
-      <GeneralError logged_in isVerifier={userStatus.isVerifier} errorHeader='Cannot Log In'
+      <GeneralError user={userStatus} errorHeader='Cannot Log In'
         errorMessage='You are already logged in' />
     )
     let page = template.replace('<!-- CONTENT -->', renderedContent)
@@ -390,18 +388,18 @@ app.get('/location', async (req, res, next) => {
   console.log('lat = ', lat)
   console.log('lng = ', lng)
   if (lat === undefined || lng === undefined) {
-    return res.redirect('/404')
+    return res.redirect('/404');
   }
   // Get GIS identifiers for location
   const gisResponse = await gisLocationQuery(lat, lng).catch((err) => {
-    console.error(err)
-    return res.status(500).send('500')
+    console.error(err);
+    return res.status(500).send('500');
   })
   console.log('GIS Response: ' + gisResponse)
 
   const locationList = await getLocationProps(gisResponse).catch((err) => {
-    console.error(err)
-    return res.status(500).send('500')
+    console.error(err);
+    return res.status(500).send('500');
   })
 
   const locationProps = {
@@ -460,9 +458,9 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
   const officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     if (err.code === '22P02') {
       // catches the case where locationId is not an integer
-      return res.status(404).redirect('/404')
+      return res.status(404).redirect('/404');
     }
-    return res.status(500).send('500')
+    return res.status(500).send('500');
   })
 
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps))
@@ -472,9 +470,9 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
 })
 
 app.get('/search', (req, res, next) => {
-  const address = req.query.q
+  const address = req.query.q;
   if (address === undefined) { // search query must be present for this endpoint or else we 404
-    return res.redirect('/404')
+    return res.redirect('/404');
   }
   const geocodingConfig = config.geocoding
   axios.get(geocodingConfig.apiUrl, {
@@ -485,23 +483,24 @@ app.get('/search', (req, res, next) => {
   }).then((response) => {
     const results = response.data.results
     if (results.length === 0) {
-      return res.redirect('/404') // eventually we want to have this redirect to a separate 'no results found' page.
+      return res.redirect('/404'); // eventually we want to have this redirect to a separate 'no results found' page.
     }
-    const topResult = results[0]
-    const { lat, lng } = topResult['geometry']['location']
-    res.redirect(`/location?lat=${lat}&lng=${lng}`)
+    const topResult = results[0];
+    const { lat, lng } = topResult['geometry']['location'];
+    res.redirect(`/location?lat=${lat}&lng=${lng}`);
   }).catch((error) => {
-    console.error(error)
-    res.status(500).send()
-  })
+    console.error(error);
+    res.status(500).send();
+  });
 })
 
 // 404 error handling
 app.use((req, res, next) => {
-  const renderedContent = renderToString(<Error404 />)
-  let page = template.replace('<!-- CONTENT -->', renderedContent)
-  page = page.replace('<!-- STYLESHEET -->', '/css/404.css')
-  res.status(404).send(page)
+  let userStatus = userLoginStatus(req);
+  const renderedContent = renderToString(<Error404 user={userStatus} />);
+  let page = template.replace('<!-- CONTENT -->', renderedContent);
+  page = page.replace('<!-- STYLESHEET -->', '/css/404.css');
+  res.status(404).send(page);
 })
 
 // Opens a socket and listens for connections only if there is no parent module running the script.

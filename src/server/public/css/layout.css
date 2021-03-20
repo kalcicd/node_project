@@ -16,7 +16,6 @@ body{
 }
 
 #titleAndHeaderBar{
-  color: #3a3a3a;
   font-size: 1.7rem;
   font-family: sans-serif;
   display: flex;
@@ -25,7 +24,6 @@ body{
   height: max-content;
   padding-bottom: 3px; /* To prevent trimming letter tails */
   border-bottom: 1px solid black;
-  overflow: hidden;
 }
 #titleBar, #headerBar{
   display: flex;
@@ -47,17 +45,29 @@ body{
   border-color: gray;
   font-weight: bold;
 }
-#title, .headerLink{
-  color: inherit;
+#title, .headerLink, .headerDropdown{
+  color: #3a3a3a;
   text-decoration: none;
   font-weight: bold;
   transform: scaleY(1.2);
   margin: auto 1rem;
 }
-.headerLink{
-}
 #title:hover, .headerLink:hover{
   text-decoration: underline;
+}
+.headerDropdownTitle{
+  color: #606058;
+  margin: 0.45rem 0 0 0.1rem;;
+}
+.headerDropdownTitle::after{
+  content: ":";
+}
+.headerDropdownOptions{
+  display: flex;
+  flex-direction: column;
+  font-size: 1.7rem;
+  transform: scaleY(0.83) translateY(-10%);
+  margin: 0;
 }
 
 /* Main Column */
@@ -141,6 +151,32 @@ button:hover,button:active{
   }
   #mainColumn{
     width: 60%;
+  }
+  .headerDropdown{
+    overflow: visible;
+  }
+  .headerDropdownTitle{
+    margin: 0;
+    color: inherit;
+    cursor: default;
+    text-decoration: none;
+  }
+  .headerDropdownTitle::after{
+    content: "";
+  }
+  .headerDropdownOptions{
+    position: absolute;
+    display: none;
+    box-sizing: border-box;
+    border: 1px solid black;
+    transform: scaleY(0.83) translateY(-10%);
+  }
+  .headerDropdownOptions>.headerLink{
+    margin: 0.8rem 0.3rem;
+  }
+  .headerDropdown:hover>.headerDropdownOptions{
+    display: flex;
+    flex-direction: column;
   }
   .desktopHidden{
     display: none !important;

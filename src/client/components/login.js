@@ -14,7 +14,7 @@ export default class Login extends React.Component {
 	 }
     return(
       <div id="app">
-        <Title/>
+        <Title />
         <div id="mainColumn">
           <h2 className="pageHeader">Log In</h2>
 		      {message}
