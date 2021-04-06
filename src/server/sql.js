@@ -196,26 +196,26 @@ const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(asy
 const deletePendingData = (updateIdStr) => new Promise(async (resolve, reject) => {
   /* Deletes a pending data row from the database */
   // extract the id and type from the given string
-  let type = updateIdStr.split('_')[0]
-  let id = updateIdStr.split('_')[1]
+  let type = updateIdStr.split('_')[0];
+  let id = updateIdStr.split('_')[1];
   // get table and id column names
-  const { pendingTableName, pendingIdName } = tableDict[type]
+  const { pendingTableName, pendingIdName } = tableDict[type];
   // todo: check for errors before sending query
   // send delete request
-  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`
-  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) })
-  resolve(result)
+  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`;
+  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) });
+  resolve(result);
 })
 
 const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) => {
-  let locationList = []
+  let locationList = [];
 
   // Format Query
   const queryString = 'SELECT a.gisidentifier, b.officetitle, c.name, c.holderid, d.levelnum' +
     ' FROM Locations a, Offices b, OfficeHolders c, LocationTypes d' +
-    ' WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid'
-  const response = String(gisResponse)
-  let gisIdentifiers = response.split(',')
+    ' WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid';
+  const response = String(gisResponse);
+  let gisIdentifiers = response.split(',');
 
   // Send Query
   await databasePool.query('SELECT * FROM pendingelectionchanges').catch((err) => reject(err))

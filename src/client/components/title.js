@@ -20,8 +20,8 @@ export function HeaderBar (props) {
     {'name':'Developers', 'url':'/developers'}
   ];
   //check if the user is logged in and if they are a verifier
-  if(props.user.loggedIn===true){
-    if(props.user.isVerifier===true){
+  if(props.user.loggedIn === true){
+    if(props.user.isVerifier === true){
 	   titleLinks.push({'name':"Verify Submissions",'url':"/verify"});
     }
     titleLinks.push({
