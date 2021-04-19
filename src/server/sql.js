@@ -245,28 +245,33 @@ const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => 
     reject(err)
   })
 
-  // todo: query db with officeholder id to get officeholderProps. An example response from the db is hardcoded below
-  const officeholderVar = {
-    officeTitle: 'Lane County Commissioner',
-    officeholderName: 'Joe Berney',
-    termStart: 'January 2019',
-    termEnd: 'May 2022',
-    nextElectionDate: 'May 2022',
-    phone: '541-746-2583',
-    email: 'joe.berney@lanecounty-or.gov',
-    meetings: 'Every Monday at 9am at Lance county Courthouse, Eugene, Oregon'
+  function formatDate(date){
+    //Formats the date objects for termStart and termEnd into human-readable format
+    if(date!==null && date!==undefined && date.toDateString!==undefined){
+      return date.toDateString();
+    }
+    return null;
   }
 
-  if (officeRes['rows'] != null && officeRes['rows'][0] != null) {
-    const sourceInfo = officeRes['rows'][0]
-    officeholderVar.officeTitle = sourceInfo.officetitle
-    officeholderVar.officeholderName = sourceInfo['name']
-    officeholderVar.termStart = String(sourceInfo['termstart'])
-    officeholderVar.termEnd = String(sourceInfo['termend'])
-    officeholderVar.nextElectionDate = String(sourceInfo['termend'])
-    officeholderVar.phone = sourceInfo['contactphone']
-    officeholderVar.email = sourceInfo['contactemail']
-    officeholderVar.meetings = sourceInfo['contactmeeting']
+  let officeholderVar = null;
+  if (officeRes['rows'] !== undefined && officeRes['rows'][0] !== undefined) {
+    officeholderVar = {};
+    let sourceInfo = officeRes['rows'];
+    officeholderVar.officeholderName = sourceInfo[0]['name'];
+    officeholderVar.phone = sourceInfo[0]['contactphone'];
+    officeholderVar.email = sourceInfo[0]['contactemail'];
+    officeholderVar.meetings = sourceInfo[0]['contactmeeting'];
+    officeholderVar.holderId = sourceInfo[0]['holderid'];
+    officeholderVar.offices = [];
+    for(let i=0; i<sourceInfo.length; i++){
+      let newOffice = {}
+      newOffice.termStart = formatDate(sourceInfo[i]['termstart']);
+      newOffice.termEnd = formatDate(sourceInfo[i]['termend']);
+      newOffice.nextElection = sourceInfo[i]['nextelection'];
+      newOffice.officeTitle = sourceInfo[i].officetitle;
+      newOffice.officeId = sourceInfo[i].officeid;
+      officeholderVar.offices.push(newOffice);
+    }
   }
 
   resolve(officeholderVar)

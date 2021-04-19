@@ -638,8 +638,11 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
       // catches the case where locationId is not an integer
       return res.status(404).redirect('/404');
     }
+	 //todo: replace this with the sending the error page
     return res.status(500).send('500');
-  })
+  });
+  //todo: check if getOfficeholderData failed
+  console.log(officeholderProps);
 
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps));
   let page = template.replace('<!-- CONTENT -->', renderedContent);

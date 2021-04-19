@@ -1,6 +1,7 @@
 import React from 'react'
 import Title from './title'
 import SearchBar from './searchBar'
+import SubmissionPopup from './submissionPopup'
 
 /**
  * Template of the Officeholder information page. Displays officeTitle, officeholderName, termStart, termEnd,
@@ -8,32 +9,26 @@ import SearchBar from './searchBar'
  * @param {Object} props
  */
 export default function Officeholder (props) {
+  let officeSections = [];
+  for(let i=0; i<props.offices.length; i++){
+    officeSections.push(<Office officeInfo={props.offices[i]} key={"office"+i} />);
+  }
   return (
     <div id='app'>
       <Title user={props.user} />
       <div id='mainColumn'>
         <SearchBar />
         <div className='pageHeader'>
-          <h2>{props.officeTitle} {props.officeholderName}'s Information:</h2>
+          <h2>{props.officeholderName}'s Information:</h2>
         </div>
         <div id='officeholderInfo'>
-          <h3 className='infoHeader'>Term</h3>
-          <div className='infoDiv'>{props.termStart} - {props.termEnd}</div>
-
-          <h3 className='infoHeader'>Next Election Date</h3>
-          <div className='infoDiv'>{props.nextElectionDate}</div>
-
-          <h3 className='infoHeader'>Phone Contact</h3>
-          <div className='infoDiv'>{props.phone}</div>
-
-          <h3 className='infoHeader'>Email Contact</h3>
-          <div className='infoDiv'>{props.email}</div>
-          
-          <h3 className='infoHeader'>Meetings</h3>
-          <div className='infoDiv'>{props.meetings}</div>
+          {officeSections}
+          <InfoRow header="Phone Contact" body={props.phone} />
+          <InfoRow header="Email Contact" body={props.email} />
+          <InfoRow header="Meetings" body={props.meetings} />
         </div>
         <div className='reportButtonWrapper'>
-          <button className='reportButton'>
+          <button className='reportButton submissionButton'>
             Any information incorrect? Submit an info update request here.
           </button>
         </div>
@@ -41,12 +36,39 @@ export default function Officeholder (props) {
           <h3 id='mapTitle'>District Map</h3>
           <img src='/icons/mapsEmbed.png' id='mapsPhoto' />
         </div>
-        <div className='reportButtonWrapper'>
-          <button className='reportButton'>
-            Map information incorrect? Submit an info update request here.
-          </button>
-        </div>
       </div>
+      <SubmissionPopup page='officeholder' currentValues={props} />
+    </div>
+  )
+}
+
+export function InfoRow(props){
+  if(props.header===undefined || props.body===undefined){
+    return null;
+  }
+  else if(props.header===null || props.body===null){
+    return null;
+  }
+  return(
+    <div className='infoWrapper'>
+      <h3 className='infoHeader'>{props.header}</h3>
+      <div className='infoDiv'>{props.body}</div>
+    </div>
+  )
+}
+
+export function Office(props){
+  const officeInfo = props.officeInfo;
+
+  let termEndRow = null;
+  if(officeInfo.termEnd!==undefined && officeInfo.termEnd!==null){
+    termEndRow = <div className='officeRow'>Current term ends on {officeInfo.termEnd}</div>;
+  }
+  return(
+    <div className='officeWrapper'>
+      <h3 className='officeHeader'>{officeInfo.officeTitle}</h3>
+      <div className='officeRow'>Current term started on {officeInfo.termStart}</div>
+      {termEndRow}
     </div>
   )
 }
