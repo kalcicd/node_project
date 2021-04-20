@@ -478,7 +478,10 @@ app.get('/login', async (req, res, next) => {
     res.status(403).send(page);
     return;
   }
-  const renderedContent = renderToString(<Login />);
+  let renderedContent = renderToString(<Login />);
+  if(req.query.redirect!==undefined){
+    renderedContent = renderToString(<Login redirect={req.query.redirect} />);
+  }
   let page = template.replace('<!-- CONTENT -->', renderedContent);
   page = page.replace('<!-- STYLESHEET -->', '/css/login.css');
   res.status(200).send(page);
@@ -488,7 +491,10 @@ app.get('/login', async (req, res, next) => {
 app.post('/login', async (req, res, next) => {
   // function to be called if the user's credentials are rejected
   function loginFailed () {
-    const renderedContent = renderToString(<Login loginFailed />);
+    let renderedContent = renderToString(<Login loginFailed={true} />);
+    if(req.body.redirect !== undefined){
+      renderedContent = renderToString(<Login loginFailed={true} redirect={req.body.redirect} />);
+    }
     let page = template.replace('<!-- CONTENT -->', renderedContent);
     page = page.replace('<!-- STYLESHEET -->', '/css/login.css');
     res.status(403).send(page);
@@ -513,7 +519,11 @@ app.post('/login', async (req, res, next) => {
           if (result) { // login was successful
             req.session.user = username;
             req.session.isVerifier = userRes['rows'][0]['isverifier'];
-            res.redirect('/');
+            let redirectLocation = "/";
+            if(req.body.redirect !== undefined){
+              redirectLocation = req.body.redirect;
+            }
+            res.redirect(redirectLocation);
           } else { // login failed
             loginFailed();
           }

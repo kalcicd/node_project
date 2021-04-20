@@ -11,7 +11,11 @@ export default class Login extends React.Component {
     let message = <div></div>;
     if(this.props.loginFailed!==undefined && this.props.loginFailed===true){
       message = <div id="loginErrorMessage">Username or password was incorrect</div>;
-	 }
+    }
+    let redirectInput = null;
+    if(this.props.redirect!==undefined){
+      redirectInput = <input name='redirect' className='hidden' defaultValue={this.props.redirect} />;
+    }
     return(
       <div id="app">
         <Title />
@@ -19,6 +23,7 @@ export default class Login extends React.Component {
           <h2 className="pageHeader">Log In</h2>
 		      {message}
           <form id="userLoginForm" method="POST" action="/login">
+            {redirectInput}
             <label className="formLabel">
               Username
               <input type='text' name='user' />

@@ -13,6 +13,11 @@ export default function Officeholder (props) {
   for(let i=0; i<props.offices.length; i++){
     officeSections.push(<Office officeInfo={props.offices[i]} key={"office"+i} />);
   }
+  //set target for submission button depending on whether the user is logged in
+  let buttonTarget = "login";
+  if(props.user !== undefined && props.user.loggedIn === true){
+    buttonTarget = "popup";
+  }
   return (
     <div id='app'>
       <Title user={props.user} />
@@ -28,7 +33,7 @@ export default function Officeholder (props) {
           <InfoRow header="Meetings" body={props.meetings} />
         </div>
         <div className='reportButtonWrapper'>
-          <button className='reportButton submissionButton'>
+          <button className='reportButton submissionButton' data-target={buttonTarget}>
             Any information incorrect? Submit an info update request here.
           </button>
         </div>
@@ -37,7 +42,7 @@ export default function Officeholder (props) {
           <img src='/icons/mapsEmbed.png' id='mapsPhoto' />
         </div>
       </div>
-      <SubmissionPopup page='officeholder' currentValues={props} />
+      <SubmissionPopup page='officeholder' currentValues={props} user={props.user}/>
     </div>
   )
 }

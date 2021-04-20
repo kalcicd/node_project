@@ -1,6 +1,9 @@
 import React from 'react'
 
 export default function SubmissionPopup(props){
+	if(props.user === undefined || props.user.loggedIn !== true){
+		return null;
+	}
 	let selectOptions = [];
 	switch(props.page){
 		case "officeholder":
