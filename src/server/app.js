@@ -643,7 +643,7 @@ app.get('/location', async (req, res, next) => {
 
 app.get('/officeholder/:officeholderId', async (req, res, next) => {
   const { officeholderId } = req.params;
-  const officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
+  let officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     if (err.code === '22P02') {
       // catches the case where locationId is not an integer
       return res.status(404).redirect('/404');
@@ -653,6 +653,9 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
   });
   //todo: check if getOfficeholderData failed
   console.log(officeholderProps);
+
+  const userData = userLoginStatus(req);
+  officeholderProps.user = userData;
 
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps));
   let page = template.replace('<!-- CONTENT -->', renderedContent);
