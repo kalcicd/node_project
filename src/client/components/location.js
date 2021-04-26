@@ -4,8 +4,6 @@ import SearchBar from './searchBar'
 import { mapsStatic } from '../../../config/default.json'
 
 export default function Location (props) {
-  let loggedIn = (props.logged_in !== undefined) ? props.logged_in : false
-  let isVerifier = (props.isVerifier !== undefined) ? props.isVerifier : false
   const mapUrl = `${mapsStatic.apiUrl}?center=${props.lat},${props.lng}&zoom=14&size=960x540&key=${mapsStatic.apiKey}`
 
   let levels = ['federal','state','county','city','school','local','other'];
@@ -15,7 +13,7 @@ export default function Location (props) {
   });
   return (
     <div id='app'>
-      <Title logged_in={loggedIn} isVerifier={isVerifier} />
+      <Title user={props.user} />
       <div id='mainColumn'>
         <SearchBar />
         <h2 className="pageHeader">Here Are the Results We Found in Your Area:</h2>

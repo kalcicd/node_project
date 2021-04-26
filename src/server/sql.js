@@ -196,26 +196,26 @@ const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(asy
 const deletePendingData = (updateIdStr) => new Promise(async (resolve, reject) => {
   /* Deletes a pending data row from the database */
   // extract the id and type from the given string
-  let type = updateIdStr.split('_')[0]
-  let id = updateIdStr.split('_')[1]
+  let type = updateIdStr.split('_')[0];
+  let id = updateIdStr.split('_')[1];
   // get table and id column names
-  const { pendingTableName, pendingIdName } = tableDict[type]
+  const { pendingTableName, pendingIdName } = tableDict[type];
   // todo: check for errors before sending query
   // send delete request
-  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`
-  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) })
-  resolve(result)
+  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`;
+  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) });
+  resolve(result);
 })
 
 const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) => {
-  let locationList = []
+  let locationList = [];
 
   // Format Query
   const queryString = 'SELECT a.gisidentifier, b.officetitle, c.name, c.holderid, d.levelnum' +
     ' FROM Locations a, Offices b, OfficeHolders c, LocationTypes d' +
-    ' WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid'
-  const response = String(gisResponse)
-  let gisIdentifiers = response.split(',')
+    ' WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid';
+  const response = String(gisResponse);
+  let gisIdentifiers = response.split(',');
 
   // Send Query
   await databasePool.query('SELECT * FROM pendingelectionchanges').catch((err) => reject(err))
@@ -245,28 +245,33 @@ const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => 
     reject(err)
   })
 
-  // todo: query db with officeholder id to get officeholderProps. An example response from the db is hardcoded below
-  const officeholderVar = {
-    officeTitle: 'Lane County Commissioner',
-    officeholderName: 'Joe Berney',
-    termStart: 'January 2019',
-    termEnd: 'May 2022',
-    nextElectionDate: 'May 2022',
-    phone: '541-746-2583',
-    email: 'joe.berney@lanecounty-or.gov',
-    meetings: 'Every Monday at 9am at Lance county Courthouse, Eugene, Oregon'
+  function formatDate(date){
+    //Formats the date objects for termStart and termEnd into human-readable format
+    if(date!==null && date!==undefined && date.toDateString!==undefined){
+      return date.toDateString();
+    }
+    return null;
   }
 
-  if (officeRes['rows'] != null && officeRes['rows'][0] != null) {
-    const sourceInfo = officeRes['rows'][0]
-    officeholderVar.officeTitle = sourceInfo.officetitle
-    officeholderVar.officeholderName = sourceInfo['name']
-    officeholderVar.termStart = String(sourceInfo['termstart'])
-    officeholderVar.termEnd = String(sourceInfo['termend'])
-    officeholderVar.nextElectionDate = String(sourceInfo['termend'])
-    officeholderVar.phone = sourceInfo['contactphone']
-    officeholderVar.email = sourceInfo['contactemail']
-    officeholderVar.meetings = sourceInfo['contactmeeting']
+  let officeholderVar = null;
+  if (officeRes['rows'] !== undefined && officeRes['rows'][0] !== undefined) {
+    officeholderVar = {};
+    let sourceInfo = officeRes['rows'];
+    officeholderVar.officeholderName = sourceInfo[0]['name'];
+    officeholderVar.phone = sourceInfo[0]['contactphone'];
+    officeholderVar.email = sourceInfo[0]['contactemail'];
+    officeholderVar.meetings = sourceInfo[0]['contactmeeting'];
+    officeholderVar.holderId = sourceInfo[0]['holderid'];
+    officeholderVar.offices = [];
+    for(let i=0; i<sourceInfo.length; i++){
+      let newOffice = {}
+      newOffice.termStart = formatDate(sourceInfo[i]['termstart']);
+      newOffice.termEnd = formatDate(sourceInfo[i]['termend']);
+      newOffice.nextElection = sourceInfo[i]['nextelection'];
+      newOffice.officeTitle = sourceInfo[i].officetitle;
+      newOffice.officeId = sourceInfo[i].officeid;
+      officeholderVar.offices.push(newOffice);
+    }
   }
 
   resolve(officeholderVar)
