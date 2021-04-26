@@ -553,21 +553,26 @@ app.get('/logout', (req, res, next) => {
 
 // Handle submission of pending data
 app.post('/submit', async (req, res) => {
-  const userStatus = userLoginStatus(req);
-  const { type, referenceLink, referenceId, updateChanges } = req.body;
-  for (const field of ['type', 'referenceLink', 'referenceId']) {
-    if (req.body[field] === undefined) {
-      return res.status(400).send(`Required field '${field}' is missing`);
+  const userStatus = userLoginStatus(req)
+  const { table, referenceLink, id } = req.body
+  let updateChanges = Object.assign({}, req.body)
+  delete updateChanges['table']
+  delete updateChanges['referenceLink']
+  delete updateChanges['id']
+  console.log(table, referenceLink, id, updateChanges)
+  if (userStatus.loggedIn) {
+    for (const field of ['table', 'referenceLink', 'id']) {
+      if (req.body[field] === undefined) {
+        return res.status(400).send(`Required field '${field}' is missing`)
+      }
     }
-  }
-  if (userStatus.isVerifier) {
-    await addPendingData(type, userStatus['username'], referenceLink, referenceId, updateChanges).catch((err) => {
-      console.error(err);
-      return res.status(400).send(err);
+    await addPendingData(table, userStatus['username'], referenceLink, id, updateChanges).catch((err) => {
+      console.error(err)
+      return res.status(400).send(err)
     })
-    return res.status(200).send();
+    return res.status(200).redirect('/')
   } else {
-    return res.status(403).send();
+    return res.status(403).send()
   }
 })
 // Generate Results page
