@@ -5,6 +5,7 @@ import express from 'express';
 import React from 'react';
 import { Pool } from 'pg';
 import { renderToString } from 'react-dom/server';
+import { Parser } from 'json2csv';
 
 import AccountCreated from '../client/components/accountCreated';
 import AboutUs from '../client/components/aboutus';
@@ -114,6 +115,65 @@ app.get('/developers', (req, res, next) => {
   page = page.replace('<!-- STYLESHEET -->', '/css/developers.css');
   res.status(200).send(page);
 });
+
+app.get('/download', async (req, res, next) => {
+  //get params
+  const {level, state} = req.query
+  let userStatus = userLoginStatus(req)
+  //set level number and query string
+  const levelNum = (level == 'state' ? 1 : (level == 'county' ? 2 : 3));
+  const queryString = 'SELECT * FROM Locations a, LocationTypes b, Offices c, Officeholders d WHERE a.TypeId = b.TypeId AND b.LevelNum = $1 AND c.LocationId = a.LocationId AND d.HolderId = c.CurrentHolder'
+  
+  //run query
+  const dataRes = await databasePool.query(queryString, [levelNum]).catch((err) => {
+    console.error(err)
+    return res.status(500).send('A server error occurred, please try again')
+  })
+  
+  if (dataRes['rows'].length > 0) {
+	  //set field mapping
+	const fields = [
+	{
+		label: 'locationid',
+		value: 'locationid'
+	},
+	{
+		label: 'typename',
+		value: 'typename'
+	},
+	{
+		label: 'locationname',
+		value: 'locationname'
+	},
+	{
+		label: 'holderid',
+		value: 'holderid'
+	},
+	{
+		label: 'name',
+		value: 'name'
+	},
+	{
+		label: 'contactphone',
+		value: 'contactphone'
+	}]
+	
+	//convert to csv
+	  const json2csv = new Parser({ fields });
+	  const csv = json2csv.parse(dataRes['rows']);
+	  res.header('Content-Type', 'text/csv');
+	  res.attachment(state+'-'+level+'.csv');
+	  res.status(200).send(csv);
+	  
+    } else {
+	  const renderedContent = renderToString(
+		<Developers logged_in={userStatus.loggedIn} isVerifier={userStatus.isVerifier} />
+	  )
+	  let page = template.replace('<!-- CONTENT -->', renderedContent)
+	  page = page.replace('<!-- STYLESHEET -->', '/css/developers.css')
+	  res.status(200).send(page)
+  }
+})
 
 // show a selection of unverified submissions
 app.get('/verify', async (req, res, next) => {
