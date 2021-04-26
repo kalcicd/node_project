@@ -124,7 +124,9 @@ app.get('/verify', async (req, res, next) => {
     return;
   }
   // todo: need to retrieve current field value in addition to pending value
-  const submissions = await getPendingChanges().catch((err) => { res.status(500).send(err) });
+  const submissions = await getPendingChanges().catch((err) => {
+    sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
+  });
   const renderedContent = renderToString(<Verify submissions={submissions} user={userStatus} />);
   let page = template.replace('<!-- CONTENT -->', renderedContent);
   page = page.replace('<!-- STYLESHEET -->', '/css/verify.css');
@@ -152,11 +154,15 @@ app.post('/verify', async (req, res, next) => {
   if (req.body.accept === 'true') {
     let acceptSuccess = await updateData(
       req.body.id, req.body.updateTarget, req.body.updateChanges
-    ).catch(() => { res.status(500).send('') });
+    ).catch(() => {
+      sendGeneralError(res,'500 Error','A server error occurred, please try again later',500,userStatus);
+    });
     if (acceptSuccess !== undefined) res.status(200).send('');
   }
   else {
-    let deleteSuccess = await deletePendingData(req.body.id).catch(() => { res.status(500).send('') });
+    let deleteSuccess = await deletePendingData(req.body.id).catch(() => {
+      sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
+    });
     if (deleteSuccess !== undefined) res.status(200).send('');
   }
 });
@@ -540,37 +546,43 @@ app.post('/submit', async (req, res) => {
   if (userStatus.loggedIn) {
     for (const field of ['table', 'referenceLink', 'id']) {
       if (req.body[field] === undefined) {
-        return res.status(400).send(`Required field '${field}' is missing`)
+        sendGeneralError(res,'Missing Field',`Required field '${field}' is missing`,400,userStatus);
+        return;
       }
     }
     await addPendingData(table, userStatus['username'], referenceLink, id, updateChanges).catch((err) => {
-      console.error(err)
-      return res.status(400).send(err)
+      console.error(err);
+      sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
+      return
     })
-    return res.status(200).redirect('/')
+    res.status(200).redirect('/')
   } else {
-    return res.status(403).send()
+    sendGeneralError(res,'Permission Denied','You must be logged in to suggest updates',403,userStatus);
   }
 })
 // Generate Results page
 app.get('/location', async (req, res, next) => {
+  //Check that the latitude and longitude were passed
   const { lat, lng } = req.query;
   console.log('lat = ', lat);
   console.log('lng = ', lng);
   if (lat === undefined || lng === undefined) {
     return res.redirect('/404');
   }
+
+  const userData = userLoginStatus(req);
+
   // Get GIS identifiers for location
   const gisResponse = await gisLocationQuery(lat, lng).catch((err) => {
     console.error(err);
-    return res.status(500).send('500');
-  })
+    sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userData);
+  });
   console.log('GIS Response: ' + gisResponse);
 
   const locationList = await getLocationProps(gisResponse).catch((err) => {
     console.error(err);
-    return res.status(500).send('500');
-  })
+    sendGeneralError(res,'500 Error','A server error occurred, please try again later',500,userData);
+  });
 
   const locationProps = {
     federal: [],
@@ -628,15 +640,16 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
   let officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     if (err.code === '22P02') {
       // catches the case where locationId is not an integer
-      return res.status(404).redirect('/404');
+      sendGeneralError(res,'Not Found','Could not find the requested location in the database',404,userData);
+      return;
     }
 	 //todo: replace this with the sending the error page
-    return res.status(500).send('500');
+   sendGeneralError(res,'Server Error','A server error occurred, please try again',500,userData);
+    return;
   });
   //todo: check if getOfficeholderData failed
   console.log(officeholderProps);
 
-  const userData = userLoginStatus(req);
   officeholderProps.user = userData;
 
   const renderedContent = renderToString(React.createElement(Officeholder, officeholderProps));
@@ -666,7 +679,8 @@ app.get('/search', (req, res, next) => {
     res.redirect(`/location?lat=${lat}&lng=${lng}`);
   }).catch((error) => {
     console.error(error);
-    res.status(500).send();
+    const userStatus = userLoginStatus(req);
+    sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
   });
 });
 
