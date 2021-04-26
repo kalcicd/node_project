@@ -12,22 +12,22 @@ if(menuButton !== undefined){
 }
 
 //Submission popup
-const buttons = document.getElementsByClassName("submissionButton");
-for(let i=0; i<buttons.length; i++){
-	if(buttons[i].dataset.target !== "popup"){
-		buttons[i].setAttribute("onclick","redirectToLogin()");
+const subButtons = document.getElementsByClassName("submissionButton");
+for(let i=0; i<subButtons.length; i++){
+	if(subButtons[i].dataset.target !== "popup"){
+		subButtons[i].setAttribute("onclick","redirectToLogin()");
 	}
 	else{
 		//add listeners to buttons on the page which should show the popup
-		buttons[i].setAttribute("onclick","showSubmissionPopup()");
+		subButtons[i].setAttribute("onclick","showSubmissionPopup()");
 	}
 }
 const popupBackground = document.getElementById("submissionPopupWrapper");
-popupBackground.addEventListener("click",hideSubmissionPopup);
+if(popupBackground !== null) popupBackground.addEventListener("click",hideSubmissionPopup);
 const popupSelect = document.getElementById("submissionPopupSelect");
-popupSelect.addEventListener("change",updateSubmissionPopupInput);
+if(popupSelect !== null) popupSelect.addEventListener("change",updateSubmissionPopupInput);
 const popupCancel = document.getElementById("submissionPopupCancelButton");
-popupCancel.addEventListener("click",hideSubmissionPopup);
+if(popupCancel !== null) popupCancel.addEventListener("click",hideSubmissionPopup);
 
 function redirectToLogin(){
 	const path = window.location.pathname;
