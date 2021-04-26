@@ -97,7 +97,7 @@ export class UnverifiedSubmission extends React.Component {
       let rejectionRadios = [];
       rejectionOptions.forEach((elem,i)=>{
         rejectionRadios.push(
-          this.renderRadioButton(submissionRadios,elem.title,elem.reason,submissionReasonId)
+          this.renderRadioButton(submissionRadios,elem.title,elem.reason,submissionReasonId,i)
         );
       });
 
@@ -148,14 +148,15 @@ export class UnverifiedSubmission extends React.Component {
     }
   }
 
-  renderRadioButton (name, label, reason, textboxId) {
+  renderRadioButton (name, label, reason, textboxId, index) {
     let stateUpdateFunction = (newReason) => {
       let newState = this.state.slice();
       newState['rejectionReason'] = newReason;
       this.setState(newState);
     }
     return (
-      <RejectionReasonRadioButton name={name} label={label} reason={reason} textbox={textboxId} />
+      <RejectionReasonRadioButton name={name} label={label} reason={reason} textbox={textboxId}
+      key={index} />
     );
   }
 }
