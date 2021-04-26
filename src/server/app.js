@@ -18,7 +18,6 @@ import Login from '../client/components/login';
 import NewAccount from '../client/components/newAccount';
 import Officeholder from '../client/components/officeholder';
 import Verify from '../client/components/verify';
-import Volunteer from '../client/components/volunteer';
 
 import config from '../../config/default.json';
 import { gisLocationQuery } from './gis';
@@ -77,6 +76,15 @@ const userLoginStatus = (req) => {
   return statusDict;
 }
 
+const sendGeneralError = (res,header,message,statusCode=500,user=null) => {
+  const renderedContent = renderToString(
+    <GeneralError errorHeader={header} errorMessage={message} user={user}/>
+  );
+  const page = template.replace("<!-- CONTENT -->", renderedContent);
+  res.status(statusCode).send(page);
+  return;
+}
+
 app.get('/', (req, res, next) => {
   let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
@@ -97,16 +105,6 @@ app.get('/about', (req, res, next) => {
   res.status(200).send(page);
 });
 
-app.get('/volunteer', (req, res, next) => {
-  let userStatus = userLoginStatus(req);
-  const renderedContent = renderToString(
-    <Volunteer user={userStatus} />
-  );
-  let page = template.replace('<!-- CONTENT -->', renderedContent);
-  page = page.replace('<!-- STYLESHEET -->', '/css/volunteer.css');
-  res.status(200).send(page);
-});
-
 app.get('/developers', (req, res, next) => {
   let userStatus = userLoginStatus(req);
   const renderedContent = renderToString(
@@ -122,12 +120,7 @@ app.get('/verify', async (req, res, next) => {
   let userStatus = userLoginStatus(req);
   if (userStatus.isVerifier !== true) {
     // redirect the user back to the landing page if they are not a verifier
-    const renderedContent = renderToString(
-      <GeneralError user={userStatus} errorHeader='403 Denied'
-        errorMessage='You do not have permission to access this page' />
-    );
-    let page = template.replace('<!-- CONTENT -->', renderedContent);
-    res.status(403).send(page);
+    sendGeneralError(res,"403 Denied","You do not have permission to access this page",403,userStatus);
     return;
   }
   // todo: need to retrieve current field value in addition to pending value
@@ -139,18 +132,20 @@ app.get('/verify', async (req, res, next) => {
   res.status(200).send(page);
 });
 app.post('/verify', async (req, res, next) => {
+  const userStatus = userLoginStatus(req);
   // check that the required fields were passed
   let hasRequiredFields = req.body.id !== undefined;
   hasRequiredFields = hasRequiredFields && req.body.accept !== undefined;
   hasRequiredFields = hasRequiredFields && req.body.reason !== undefined;
   if (!hasRequiredFields) {
-    res.status(400).send('Missing fields');
+    sendGeneralError(res,'Missing Fields','The request was missing important fields',400,userStatus);
     return;
   }
   //check that the user is a verifier
-  let userStatus = userLoginStatus(req);
   if(userStatus.isVerifier === false){
-    res.status(403).send('Access denied');
+    sendGeneralError(
+      res,'Access Denied','You do not have permission to verify submissions',403,userStatus
+    );
     return;
   }
   // update/create new data
@@ -171,12 +166,10 @@ app.get('/newAccount', (req, res, next) => {
   let userStatus = userLoginStatus(req);
   if (userStatus.loggedIn === true) {
     // redirect if the user is already logged in
-    const renderedContent = renderToString(
-      <GeneralError user={userStatus} errorHeader='You are logged in'
-        errorMessage='You cannot create a new account, you already have an account' />
+    sendGeneralError(
+      res,'You Are Logged In','You cannot create a new account, you already have an account',
+      403,userStatus
     );
-    let page = template.replace('<!-- CONTENT -->', renderedContent);
-    res.status(403).send(page);
     return;
   }
   const renderedContent = renderToString(<NewAccount />);
@@ -220,10 +213,11 @@ app.post('/newAccount', async (req, res, next) => {
   bcrypt.hash(req.body.pass, bcryptSaltRounds, (err, hash) => {
     if (err) { // show an error page to the user if hashing the password failed
       // todo: log error output to console or file
-      const renderedContent = renderToString(<GeneralError errorHeader='500 Internal Server Error'
-        errorMessage='An error occurred while creating the user, please try again or contact an administrator if the problem persists' />);
-      let page = template.replace('<!-- CONTENT -->', renderedContent);
-      res.status(500).send(page);
+      sendGeneralError(
+      res,'500 Internal Server Error',
+      'An error occurred while creating the user, please try again or contact an administrator if the problem persists',
+      500
+      );
     } else {
       /*
         newUserQuery is a string which is passed to the databasePool.query function
@@ -295,26 +289,22 @@ app.post('/newAccount', async (req, res, next) => {
 
 //About user page
 app.get('/aboutme', async (req,res,next) => {
-  let userStatus = userLoginStatus(req);
+  const userStatus = userLoginStatus(req);
   if(userStatus.loggedIn === false){  //check if the user is not logged in
-    const renderedContent = renderToString(
-      <GeneralError user={userStatus} errorHeader="Not logged in"
-      errorMessage="You must be logged in to access this page" />
+    sendGeneralError(
+      res,'Not Logged In','You must be logged in to access this page',403,userStatus
     );
-    let page = template.replace("<!-- CONTENT -->",renderedContent);
-    res.status(403).send(page);
     return;
   }
   //fetch user data from the database
   const userData = await databasePool.query(
     "SELECT * FROM Users WHERE username=$1", [userStatus.username]
   ).catch((err)=>{
-    const renderedContent = renderToString(
-      <GeneralError user={userStatus} errorHeader="500 Error"
-      errorMessage="A server error occurred, please try again or contact an administrator if the problem persists" />
+    sendGeneralError(
+      res,'500 Error',
+      'A server error occurred, plase try again or contact an administrator if the problem persists',
+      500,userStatus
     );
-    let page = template.replace("<!-- CONTENT -->",renderedContent);
-    res.status(500).send(page);
     return;
   });
   //todo: check if the user could not be found
@@ -332,12 +322,9 @@ app.get('/aboutme', async (req,res,next) => {
 app.post("/updateAccount", async (req,res,next) => {
   const userStatus = userLoginStatus(req);
   if(userStatus.loggedIn === false){  //check if the user is not logged in
-    const renderedContent = renderToString(
-      <GeneralError errorHeader='Permission Denied'
-        errorMessage='You must be logged in to update your account information'/>
+    sendGeneralError(
+      res,'Permission Denied','You must be logged in to update your account information',403,userStatus
     );
-    const page = template.replace("<!-- CONTENT -->",renderedContent);
-    res.status(403).send(page);
     return;
   }
   //fetch user data from the database
@@ -356,12 +343,11 @@ app.post("/updateAccount", async (req,res,next) => {
   });
   //check if the user could not be found
   if(oldUserData.rows === undefined || oldUserData.rows[0] === undefined){
-    const renderedContent = renderToString(
-      <GeneralError userData={userStatus} errorHeader="Failed to find user"
-      errorMessage="The server could not find the user information, please try again or contact an administrator if the problem persists" />
+    sendGeneralError(
+      res,'Failed to Find User',
+      'The server could not find the user information, please try again or contact an administrator if the problem persists',
+      500,userStatus
     );
-    let page = template.replace("<!-- CONTENT -->",renderedContent);
-    res.status(500).send(page);
     return;
   }
   oldUserData = oldUserData.rows[0];
@@ -470,12 +456,9 @@ app.post("/updateAccount", async (req,res,next) => {
 app.get('/login', async (req, res, next) => {
   let userStatus = userLoginStatus(req);
   if(userStatus.loggedIn === true){
-    const renderedContent = renderToString(
-      <GeneralError user={userStatus} errorHeader='Cannot Log In'
-        errorMessage='You are already logged in' />
+    sendGeneralError(
+      res,'Cannot Log In','You are already logged in',403,userStatus
     );
-    let page = template.replace('<!-- CONTENT -->', renderedContent);
-    res.status(403).send(page);
     return;
   }
   let renderedContent = renderToString(<Login />);
@@ -505,10 +488,7 @@ app.post('/login', async (req, res, next) => {
   // find user in database
   const userRes = await databasePool.query('SELECT * FROM Users WHERE username=$1', [username]).catch((err) => {
     console.error(err);
-    const renderedContent = renderToString(<GeneralError errorHeader="500 Error"
-      errorMessage="A server error occurred, please try again" />);
-    const page = template.replace("<!-- CONTENT -->",renderedContent);
-    res.status(500).send(page);
+    sendGeneralError(res,'500 Error','A server error occurred, please try again',500);
     return;
   })
   if (userRes['rows'].length > 0 && userRes['rows'][0].username === username) {
@@ -528,10 +508,7 @@ app.post('/login', async (req, res, next) => {
             loginFailed();
           }
         } else { // an error occurred
-          const renderedContent = renderToString(<GeneralError errorHeader="500 Error"
-            errorMessage="A server error occurred, please try again" />);
-          const page = template.replace("<!-- CONTENT -->",renderedContent);
-          res.status(500).send(page);
+          sendGeneralError(res,'500 Error','A server error occurred, please try again',500);
         }
       }
     )
