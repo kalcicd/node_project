@@ -39,6 +39,8 @@ const session = require('express-session');
 // bcrypt for password hashing
 const bcrypt = require('bcrypt');
 const bcryptSaltRounds = 15;
+// nodemailer to send users emails
+const nodemailer = require('nodemailer');
 
 const databasePool = new Pool({
   host: config.postgresql.address,
@@ -61,6 +63,16 @@ app.use(session({
   saveUninitialized: false,
   cookie: {}
 }));
+
+// configure nodemailer
+const mail = nodemailer.createTransport({
+  service: config.mail.service,
+  auth: {
+    user: config.mail.username,
+    pass: config.mail.password
+  }
+});
+const mailTemplate = fs.readFileSync(path.join(__dirname,'./views/email.html'), 'utf8');
 
 const userLoginStatus = (req) => {
   // extracts the relevant user data from the active session and returns it in a dict
@@ -195,6 +207,13 @@ app.get('/verify', async (req, res, next) => {
 });
 app.post('/verify', async (req, res, next) => {
   const userStatus = userLoginStatus(req);
+  //check that the user is a verifier
+  if(userStatus.isVerifier === false){
+    sendGeneralError(
+      res,'Access Denied','You do not have permission to verify submissions',403,userStatus
+    );
+    return;
+  }
   // check that the required fields were passed
   let hasRequiredFields = req.body.id !== undefined;
   hasRequiredFields = hasRequiredFields && req.body.accept !== undefined;
@@ -203,15 +222,9 @@ app.post('/verify', async (req, res, next) => {
     sendGeneralError(res,'Missing Fields','The request was missing important fields',400,userStatus);
     return;
   }
-  //check that the user is a verifier
-  if(userStatus.isVerifier === false){
-    sendGeneralError(
-      res,'Access Denied','You do not have permission to verify submissions',403,userStatus
-    );
-    return;
-  }
   // update/create new data
   if (req.body.accept === 'true') {
+    // accept the submission
     let acceptSuccess = await updateData(
       req.body.id, req.body.updateTarget, req.body.updateChanges
     ).catch(() => {
@@ -220,10 +233,44 @@ app.post('/verify', async (req, res, next) => {
     if (acceptSuccess !== undefined) res.status(200).send('');
   }
   else {
-    let deleteSuccess = await deletePendingData(req.body.id).catch(() => {
+    // reject the submission
+    const deleteSuccess = await deletePendingData(req.body.id).catch(() => {
       sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
     });
-    if (deleteSuccess !== undefined) res.status(200).send('');
+    if (deleteSuccess !== undefined){
+      // fetch the data about the submission user
+      let submitUser = await databasePool.query(
+        'SELECT * FROM Users WHERE username=$1', [req.body.submissionUser]
+      ).catch(()=>{
+        sendGeneralError(res,'500 Server Error','A server error occurred, please try again');
+      });
+      submitUser = submitUser.rows[0];
+      // check that the user has an email and the user wants to receive emails
+      if(submitUser.email !== null && submitUser.email.length > 0 && submitUser.wantsemails === true){
+        //create the email from the template
+        let mailHtml = mailTemplate.replace("<!-- REASON -->",req.body.reason);
+        if(submitUser.name !== null && submitUser.name.length > 0){
+          mailHtml = mailHtml.replace("<!-- NAME -->",submitUser.name);
+        }
+        else{
+          mailHml = mailHtml.replace("<!-- NAME -->",submitUser.username);
+        }
+        //send the user an email
+        const mailOptions = {
+          from: config.mail.username,
+          to: submitUser.email,
+          subject: "NODE Project: Submission Rejected",
+          html: mailHtml
+        };
+        mail.sendMail(mailOptions,(err,inf) => {
+          if(err){
+            console.log("Failed to send rejection email to "+submitUser.username);
+          }
+        });
+      }
+      // send the submission user an email
+      res.status(200).send('');
+    }
   }
 });
 
@@ -357,9 +404,7 @@ app.post('/newAccount', async (req, res, next) => {
 app.get('/aboutme', async (req,res,next) => {
   const userStatus = userLoginStatus(req);
   if(userStatus.loggedIn === false){  //check if the user is not logged in
-    sendGeneralError(
-      res,'Not Logged In','You must be logged in to access this page',403,userStatus
-    );
+    res.status(304).redirect("/login?redirect=/aboutme");
     return;
   }
   //fetch user data from the database
@@ -472,8 +517,31 @@ app.post("/updateAccount", async (req,res,next) => {
     let queryStr = "UPDATE Users SET ";
     possibleFields.forEach((elem) => {
       if(req.body.hasOwnProperty(elem)){
-        queryStr += elem + "='" + req.body[elem] + "',";
+        if(req.body[elem].length === 0){
+          //if the new value is an empty string, set the database value to null
+          queryStr += elem + "=NULL,";
+        }
+        else{
+          queryStr += elem + "='" + req.body[elem] + "',";
+        }
       }
+    });
+    queryStr = queryStr.slice(0,-1);  //remove trailing comma
+    queryStr += " WHERE username='" + userStatus.username + "';";
+    //add a query for the update information
+    queryStr += " SELECT * FROM Users WHERE username='" + userStatus.username + "';";
+    //send the query to the database
+    updateUserData(queryStr,oldUserData);
+    return;
+  }
+
+  //check if the user's preferences were updated
+  if(req.body.hasOwnProperty("preferences")){
+    const possibleColumns = ["wantsemails"];
+    let queryStr = "UPDATE Users SET ";
+    possibleColumns.forEach((elem) => {
+      let newColValue = (req.body.hasOwnProperty(elem))?"TRUE":"FALSE";
+      queryStr += elem + "=" + newColValue + ",";
     });
     queryStr = queryStr.slice(0,-1);  //remove trailing comma
     queryStr += " WHERE username='" + userStatus.username + "';";
@@ -514,7 +582,7 @@ app.post("/updateAccount", async (req,res,next) => {
     let page = template.replace("<!-- CONTENT -->",renderedContent);
     page = page.replace("<!-- STYLESHEET -->", "/css/aboutAccount.css");
     page = page.replace('<!--SCRIPT-->', '<script src="/js/aboutAccount.js" defer></script>');
-    req.status(200).send(page);
+    res.status(200).send(page);
   }
 });
 

@@ -79,15 +79,15 @@ export class UnverifiedSubmission extends React.Component {
       const rejectionOptions = [
         {
           'title':'Inaccurate Information',
-          'reason':'The given information was inaccurate.'
+          'reason':'the submitted information was inaccurate'
         },
         {
           'title':'Outdated Information',
-          'reason':'The provided information was outdated.'
+          'reason':'the provided information was outdated'
         },
         {
           'title':'Poor Quality Reference',
-          'reason':'The reference given was of poor quality or inaccurate.'
+          'reason':'the reference given was of poor quality or inaccurate'
         },
         {
           'title':'Other',
@@ -107,7 +107,7 @@ export class UnverifiedSubmission extends React.Component {
           <button type='button' className='submissionShowHideButton' data-target={submissionDivId}>
             Show/Hide
           </button>
-          <div className='submissionBody hidden' id={submissionDivId}
+          <div className='submissionBody hidden' id={submissionDivId} data-submit-user={submission.user}
             data-update-id={submission.id} data-update-target={submission.updateTarget}>
             <table className='submissionUpdateTable'>
               <thead>

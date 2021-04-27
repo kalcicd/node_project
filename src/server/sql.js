@@ -174,7 +174,8 @@ const getPendingChanges = () => new Promise(async (resolve, reject) => {
         'isNew': row[idName] === null,
         'reference': row['referencelink'],
         'updates': getFormattedUpdates(row, type),
-        'updateTarget': row[idName]
+        'updateTarget': row[idName],
+        'user': row['username']
       })
     }
   }
