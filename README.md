@@ -72,12 +72,21 @@ Regardless of where it’s deployed, _your app will always run the same_ as long
 Docker is installed on the machine.
 
 1. Install Docker: https://docs.docker.com/engine/installation/
+   - Docker Compose is required for this application, but most installations of Docker
+     come bundled with this tool. For some machines, you may have to install Docker-compose
+     separately. Look [here](https://docs.docker.com/compose/install/) for details
 
 2. Clone the repo and move into the directory (see above)
 
-3. Run the shell script to run the app in Docker.
+3. Copy the config example to `./config/default.json` and fill in the
+   placeholder data values in the newly copied file.
+   ```
+   $ cp ./config/default-example.json ./config/default.json
+   ```
+
+4. Run the shell script to run the app in Docker.
     ```
     $ ./run-app-in-docker.sh
     ```
     
-4. Yep, that's it. Visit `http://localhost:8080/` to checkout the app.
+5. Yep, that's it. Visit `http://localhost:8080/` to checkout the app.
