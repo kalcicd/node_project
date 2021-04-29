@@ -1,10 +1,19 @@
-## National Open Data Elections Project Website
+# National Open Data Elections Project Website
+
+## Introduction
+
+Welcome to the NODE Project - a place to find information about your elected officials and
+when/where they meet. This project was started at Oregon State University but depends upon
+crowd sources from throughout the United States to help add and maintain the data so that
+they are as accurate as possible. NODE stands for National Open Database for Elections.
+All of the data you will find on this site is open data and available for developers to
+build upon with their own tools. The data is available under the terms of the MIT License.
 
 ## Installation Instructions
 
 ### To run the app locally
 
-1. Make sure you have `node` and `npm` installed.
+1. Make sure you have `node` and `npm` installed. 
     
 2. Alternatively, use [yarn](https://yarnpkg.com/en/) for faster dependency installation
     and more stable dependency management. You can use `yarn` in the place of `npm`.
@@ -28,8 +37,14 @@
     ```
     $ npm/yarn install
     ```
+ 
+6. Copy the config example to `./config/default.json` and fill in the
+   placeholder data values in the newly copied file.
+   ```
+   $ cp ./config/default-example.json ./config/default.json
+   ```
     
-6. Run the app locally in a _development_ mode.
+7. Run the app locally in a _development_ mode.
     ```
     $ npm/yarn run dev
     ```
@@ -37,15 +52,13 @@
     to the client side and the server side are immediately detected and the app is
     re-bundled / re-started automatically.
     
-7. Run the app locally in a _production_ mode.
+8. Run the app locally in a _production_ mode.
     ```
     $ npm/yarn start
     ```
     - The production mode bundles the app into a much smaller size.
     
-8. Visit `http://localhost:8080/`: you should see a `hello world` message.
-
-9. Use the repo as a starting point of your app!
+9. Visit `http://localhost:8080/`: to navigate to the landing page.
 
 
 ### To run the app in Docker
@@ -62,30 +75,9 @@ Docker is installed on the machine.
 
 2. Clone the repo and move into the directory (see above)
 
-3. Run the app in Docker.
+3. Run the shell script to run the app in Docker.
     ```
     $ ./run-app-in-docker.sh
     ```
     
 4. Yep, that's it. Visit `http://localhost:8080/` to checkout the app.
-
-
-### To run tests
-
-The project uses [Jest](https://facebook.github.io/jest/) as a test runner.
-It comes with useful features like parallel testing, intelligent test watching
-and coverage report.
-
-1. Install dependencies, if you haven't done yet.
-
-2. Run all the tests once.
-    ```
-    $ npm/yarn test
-    ``` 
-    - Also runs `standard` ([JavaScript Standard Style](https://standardjs.com/)) at the end to highlight any
-    linting errors.
-
-3. Run tests in a watch mode.
-    ```
-    $ npm/yarn test:watch
-    ```
