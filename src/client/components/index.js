@@ -3,11 +3,9 @@ import Title from './title'
 import SearchBar from './searchBar'
 
 export default function Index (props) {
-  let logged_in = (props.logged_in !== undefined) ? props.logged_in : false
-  let isVerifier = (props.isVerifier !== undefined) ? props.isVerifier : false
   return (
     <div id='app'>
-      <Title logged_in={logged_in} isVerifier={isVerifier} />
+      <Title user={props.user} />
       <div id='mainColumn'>
         <SearchBar />
         <div id='descriptionText'>
