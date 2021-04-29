@@ -76,3 +76,8 @@
 .noDataMessage{
   color: #606070;
 }
+.submissionButton{
+  display: block;
+  font-size: 1.3rem;
+  margin: 0 auto;
+}

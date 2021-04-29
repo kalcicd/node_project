@@ -73,9 +73,15 @@ submissions.forEach((sub)=>{
   );
   let changesArr = [];
   tableRows.forEach((row)=>{
-    if(row.children.length<3) return; //skip collecting changes for new submissions
-    let fieldName = row.children[0].textContent;
-    let value = row.children[2].textContent;
+    let fieldName, value;
+    if(row.children.length<3){
+      fieldName = row.children[0].textContent;
+      value = row.children[1].textContent;
+    }
+    else{
+      fieldName = row.children[0].textContent;
+      value = row.children[2].textContent;
+    }
     changesArr.push(fieldName+":"+value);
   });
   let changes = changesArr.join(",");

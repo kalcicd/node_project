@@ -18,6 +18,8 @@ export default function Officeholder (props) {
   if(props.user !== undefined && props.user.loggedIn === true){
     buttonTarget = "popup";
   }
+  //generate the redirect link
+  const redirect = "/officeholder/"+props.holderId;
   return (
     <div id='app'>
       <Title user={props.user} />
@@ -42,7 +44,7 @@ export default function Officeholder (props) {
           <img src='/icons/mapsEmbed.png' id='mapsPhoto' />
         </div>
       </div>
-      <SubmissionPopup page='officeholder' currentValues={props} user={props.user}/>
+      <SubmissionPopup page='officeholder' currentValues={props} user={props.user} redirect={redirect} />
     </div>
   )
 }

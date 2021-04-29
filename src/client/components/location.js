@@ -1,16 +1,26 @@
 import React from 'react'
 import Title from './title'
 import SearchBar from './searchBar'
+import SubmissionPopup from './submissionPopup'
 import { mapsStatic } from '../../../config/default.json'
 
 export default function Location (props) {
   const mapUrl = `${mapsStatic.apiUrl}?center=${props.lat},${props.lng}&zoom=14&size=960x540&key=${mapsStatic.apiKey}`
 
-  let levels = ['federal','state','county','city','school','local','other'];
+  let levels = props.levels;
   let results = [];
-  levels.forEach((level)=>{
-    results.push(<LocationLevel level={level} levelResults={props[level]} />);
+  levels.forEach((level,i)=>{
+    results.push(<LocationLevel level={level.name} levelResults={level.results} key={i} />);
   });
+
+  let submissionButtonTarget = "popup";
+  if(props.user !== undefined && props.user.loggedIn !== true){
+    submissionButtonTarget = "login";
+  }
+  const redirect = "/location?lat="+props.lat+"&lng="+props.lng;
+
+  let propsWithLevels = {'levels':levels};
+  Object.assign(propsWithLevels,props);
   return (
     <div id='app'>
       <Title user={props.user} />
@@ -23,6 +33,11 @@ export default function Location (props) {
         <div id='locationResults'>
           {results}
         </div>
+        <button className='submissionButton' data-target={submissionButtonTarget}>
+          Missing information? Click here to suggest an update
+        </button>
+        <SubmissionPopup page='location' currentValues={propsWithLevels}
+          user={props.user} redirect={redirect} />
       </div>
     </div>
   )
@@ -39,18 +54,25 @@ export class LocationLevel extends React.Component{
     let headerKey = this.props.level + "Header";
     let headerText = this.props.level.charAt(0).toUpperCase() + this.props.level.slice(1);
     let bodyId = this.props.level + "Results";
+    // create the list of results
     let results = [];
-    this.props.levelResults.map((loc)=>{
+    console.log(this.props.levelResults);
+    this.props.levelResults.forEach((loc)=>{
+      let officeHolderLink = <span>Not currently occupied</span>;
+      if(loc.name!==null){
+        officeHolderLink = <a href={'/officeholder/'+loc.id}>{loc.name}</a>;
+      }
       results.push(
         <li key={loc.id} className='resultItem'>
-          {loc.title}: <a href={loc.id}>{loc.name}</a>
+          {loc.title}: {officeHolderLink}
         </li>
       );
     });
+    // check if there are no results for a certain level
     if(this.props.levelResults.length===0){
       results.push(
         <li key="message" className='resultItem noDataMessage'>
-          There are no elections in the database at this level for your location
+          There are no offices in the database at this level for the location
         </li>
       );
     }

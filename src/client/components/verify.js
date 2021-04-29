@@ -53,7 +53,7 @@ export class UnverifiedSubmission extends React.Component {
         update.forEach((data,i)=>{
           //add the 'old information' entry only if the submission is not new
           if(i!==1 || submission.isNew===undefined || submission.isNew===false){
-            rowData.push(<td key={i}>{data}</td>);
+            rowData.push(<td key={i}>{String(data)}</td>);
           }
         });
         //add the new row to the table array

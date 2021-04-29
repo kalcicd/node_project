@@ -664,26 +664,32 @@ app.get('/logout', (req, res, next) => {
 
 // Handle submission of pending data
 app.post('/submit', async (req, res) => {
-  const userStatus = userLoginStatus(req)
-  const { table, referenceLink, id } = req.body
-  let updateChanges = Object.assign({}, req.body)
-  delete updateChanges['table']
-  delete updateChanges['referenceLink']
-  delete updateChanges['id']
-  console.log(table, referenceLink, id, updateChanges)
+  const userStatus = userLoginStatus(req);
+  const { table, referenceLink, id } = req.body;
+  //Extract the redirect location if it exists
+  let redirect = '/';
+  if(req.body.hasOwnProperty('redirect')) redirect = req.body.redirect;
+  //Create a copy of the post properties
+  let updateChanges = Object.assign({}, req.body);
+  delete updateChanges['table'];
+  delete updateChanges['referenceLink'];
+  delete updateChanges['id'];
+  delete updateChanges['redirect'];
+  //Check that the user is logged in
   if (userStatus.loggedIn) {
+    //Check for the required fields
     for (const field of ['table', 'referenceLink', 'id']) {
       if (req.body[field] === undefined) {
         sendGeneralError(res,'Missing Field',`Required field '${field}' is missing`,400,userStatus);
         return;
       }
     }
-    await addPendingData(table, userStatus['username'], referenceLink, id, updateChanges).catch((err) => {
+    await addPendingData(table,userStatus['username'],referenceLink,id,updateChanges).catch((err) => {
       console.error(err);
       sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
-      return
+      return;
     })
-    res.status(200).redirect('/')
+    res.status(200).redirect(redirect);
   } else {
     sendGeneralError(res,'Permission Denied','You must be logged in to suggest updates',403,userStatus);
   }
@@ -692,10 +698,9 @@ app.post('/submit', async (req, res) => {
 app.get('/location', async (req, res, next) => {
   //Check that the latitude and longitude were passed
   const { lat, lng } = req.query;
-  console.log('lat = ', lat);
-  console.log('lng = ', lng);
   if (lat === undefined || lng === undefined) {
-    return res.redirect('/404');
+    res.redirect('/404');
+    return;
   }
 
   const userData = userLoginStatus(req);
@@ -705,57 +710,45 @@ app.get('/location', async (req, res, next) => {
     console.error(err);
     sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userData);
   });
-  console.log('GIS Response: ' + gisResponse);
 
   const locationList = await getLocationProps(gisResponse).catch((err) => {
     console.error(err);
     sendGeneralError(res,'500 Error','A server error occurred, please try again later',500,userData);
   });
 
-  const locationProps = {
-    federal: [],
-    state: [],
-    county: [],
-    city: [],
-    school: [],
-    local: [],
-    other: [],
-    lat,
-    lng
-  }
+  let locationProps = {
+    'user': userData,
+    'levels': [
+      {'name':'Federal','results':[]},
+      {'name':'State','results':[]},
+      {'name':'County','results':[]},
+      {'name':'City','results':[]},
+      {'name':'School','results':[]},
+      {'name':'Local','results':[]},
+      {'name':'Other','results':[]}
+    ],
+    'locations':[],
+    'lat': lat,
+    'lng': lng
+  };
 
-  for (let i = 0; i < locationList.length; i++) {
-    const loc = locationList[i];
-    let prop;
-    switch (loc.levelnum) {
-      case 0:
-        prop = locationProps.federal;
-        break;
-      case 1:
-        prop = locationProps.state;
-        break;
-      case 2:
-        prop = locationProps.county;
-        break;
-      case 3:
-        prop = locationProps.city;
-        break;
-      case 4:
-        prop = locationProps.school;
-        break;
-      case 5:
-        prop = locationProps.local;
-        break;
-      default:
-        prop = locationProps.other;
-        break;
-    }
-    prop.push({
-      title: loc.officetitle,
-      name: loc.name,
-      id: `/officeholder/${loc.holderid}`
+  //add reurned locations to the level arrays
+  Array(locationList)[0].forEach((loc,i)=>{
+    //add the database location ot the locations array
+    locationProps.locations.push({
+      'name': loc.locationname,
+      'id': loc.locationid
     });
-  }
+    //add the result to the results array
+    const levelInd = (locationProps.levels.length <= loc.levelnum)?6:loc.levelnum;
+    locationProps.levels[levelInd].results.push({
+      'title': loc.officetitle,
+      'name': loc.name,
+      'id': loc.holderid
+    });
+  });
+
+  //render the page
   const renderedContent = renderToString(React.createElement(Location, locationProps));
   let page = template.replace('<!-- CONTENT -->', renderedContent);
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css');
@@ -764,6 +757,7 @@ app.get('/location', async (req, res, next) => {
 });
 
 app.get('/officeholder/:officeholderId', async (req, res, next) => {
+  const userData = userLoginStatus(req);
   const { officeholderId } = req.params;
   let officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     if (err.code === '22P02') {
@@ -771,12 +765,14 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
       sendGeneralError(res,'Not Found','Could not find the requested location in the database',404,userData);
       return;
     }
-	 //todo: replace this with the sending the error page
    sendGeneralError(res,'Server Error','A server error occurred, please try again',500,userData);
     return;
   });
   //todo: check if getOfficeholderData failed
-  console.log(officeholderProps);
+  if(officeholderProps===undefined || officeholderProps===null){
+    res.redirect('/404');
+    return;
+  }
 
   officeholderProps.user = userData;
 

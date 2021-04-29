@@ -7,7 +7,6 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
 
   // Create a wms client at server url
   const url = config.gisInfo.url
-  console.log('clientUrl: ' + url)
   const wms = wmsclient(url)
   const parsedLat = parseFloat(lat)
   const parsedLng = parseFloat(lng)
@@ -41,8 +40,6 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
 
     // Get array of responses
     const responseList = response['wfs%3afeaturecollection']['gml%3afeaturemember']
-
-    console.log('ResponseList: ' + responseList)
 
     const results = []
 
