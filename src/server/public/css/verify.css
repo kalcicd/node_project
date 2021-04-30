@@ -4,6 +4,12 @@
 	width: 100%;
 }
 
+.noSubmissionMessage{
+  text-align: center;
+  font-size: 1.9rem;
+  margin-top: 1rem;
+}
+
 .submission{
 	border: 1px solid black;
 	border-radius: 3px;

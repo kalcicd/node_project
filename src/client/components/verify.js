@@ -10,11 +10,9 @@ export default function Verify (props) {
   } else {
     forVerification.push(<div className='noSubmissionMessage'>There are no submissions to review</div>);
   }
-  let loggedIn = (props.logged_in !== undefined) ? props.logged_in : false;
-  let isVerifier = (props.is_verifier !== undefined) ? props.is_verifier : false;
   return (
     <div id='app'>
-      <Title logged_in={loggedIn} is_verifier={isVerifier} />
+      <Title user={props.user} />
       <div id='mainColumn'>
         <div id='verifierColumn'>
           {forVerification}
@@ -55,7 +53,7 @@ export class UnverifiedSubmission extends React.Component {
         update.forEach((data,i)=>{
           //add the 'old information' entry only if the submission is not new
           if(i!==1 || submission.isNew===undefined || submission.isNew===false){
-            rowData.push(<td key={i}>{data}</td>);
+            rowData.push(<td key={i}>{String(data)}</td>);
           }
         });
         //add the new row to the table array
@@ -81,15 +79,15 @@ export class UnverifiedSubmission extends React.Component {
       const rejectionOptions = [
         {
           'title':'Inaccurate Information',
-          'reason':'The given information was inaccurate.'
+          'reason':'the submitted information was inaccurate'
         },
         {
           'title':'Outdated Information',
-          'reason':'The provided information was outdated.'
+          'reason':'the provided information was outdated'
         },
         {
           'title':'Poor Quality Reference',
-          'reason':'The reference given was of poor quality or inaccurate.'
+          'reason':'the reference given was of poor quality or inaccurate'
         },
         {
           'title':'Other',
@@ -99,7 +97,7 @@ export class UnverifiedSubmission extends React.Component {
       let rejectionRadios = [];
       rejectionOptions.forEach((elem,i)=>{
         rejectionRadios.push(
-          this.renderRadioButton(submissionRadios,elem.title,elem.reason,submissionReasonId)
+          this.renderRadioButton(submissionRadios,elem.title,elem.reason,submissionReasonId,i)
         );
       });
 
@@ -109,7 +107,7 @@ export class UnverifiedSubmission extends React.Component {
           <button type='button' className='submissionShowHideButton' data-target={submissionDivId}>
             Show/Hide
           </button>
-          <div className='submissionBody hidden' id={submissionDivId}
+          <div className='submissionBody hidden' id={submissionDivId} data-submit-user={submission.user}
             data-update-id={submission.id} data-update-target={submission.updateTarget}>
             <table className='submissionUpdateTable'>
               <thead>
@@ -150,14 +148,15 @@ export class UnverifiedSubmission extends React.Component {
     }
   }
 
-  renderRadioButton (name, label, reason, textboxId) {
+  renderRadioButton (name, label, reason, textboxId, index) {
     let stateUpdateFunction = (newReason) => {
       let newState = this.state.slice();
       newState['rejectionReason'] = newReason;
       this.setState(newState);
     }
     return (
-      <RejectionReasonRadioButton name={name} label={label} reason={reason} textbox={textboxId} />
+      <RejectionReasonRadioButton name={name} label={label} reason={reason} textbox={textboxId}
+      key={index} />
     );
   }
 }

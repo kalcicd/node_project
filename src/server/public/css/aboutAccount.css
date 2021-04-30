@@ -1,0 +1,82 @@
+.errorDiv, .successDiv{
+  width: 100%;
+  padding: 0.5rem 0;
+  border-radius: 0.3rem;
+  text-align: center;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+.successDiv{
+  background-color: #00b359;
+}
+.errorDiv{
+  background-color: #ff9966;
+}
+
+.dataGroup{
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  grid-gap: 0.4rem;
+  border-bottom: 1px solid black;
+  margin-top: 1.5rem;
+  padding-bottom: 0.7rem;
+}
+
+.dataTable{
+  border-collapse: collapse;
+  font-size: 1.3rem
+}
+.row0{background-color: rgba(128,128,255,0.1)}
+.dataTableNameCell{
+  text-align: left;
+}
+.dataTableValueCell{
+  text-align: right;
+}
+
+.showFormButton{
+  font-size: 1.3rem;
+}
+
+.modifyFormWrapper{
+  grid-column: 1/-1;
+}
+.modifyForm{
+  width: calc(100% - 1rem);
+  max-width: max-content;
+  margin: 0 auto;
+  padding: 0.5rem;
+  border-radius: 0.4rem;
+  background-color: #e8e8e8;
+}
+.formLabel{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 1.2rem;
+  margin: 0.4rem 0;
+}
+.formInput{
+  flex-grow: 1;
+  flex-shrink: 1;
+  font-size: 1.2rem;
+  margin-left: 0.5rem;
+}
+.formInput[type="checkbox"]{
+  flex-grow: 0;
+  margin-left: auto;
+  position: relative;
+  left: 0.25rem;
+}
+.formSubmit{
+  font-size: 1.3rem;
+  display: block;
+  margin: 0.4rem auto;
+}
+
+#passwordGroup{
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
