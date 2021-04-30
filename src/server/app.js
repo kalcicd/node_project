@@ -695,14 +695,21 @@ app.get('/location', async (req, res, next) => {
 
   // Get GIS identifiers for location
   const gisResponse = await gisLocationQuery(lat, lng).catch((err) => {
-    console.error(err)
-    sendGeneralError(res, '500 Error', 'A server error occurred, please try again', 500, userData)
-  })
+    console.error(err);
+    sendGeneralError(res,'No Results','There are no results for this location, sorry',500,userData);
+  });
+  if(gisResponse===undefined){
+    return;
+  }
 
   const locationList = await getLocationProps(gisResponse).catch((err) => {
-    console.error(err)
-    sendGeneralError(res, '500 Error', 'A server error occurred, please try again later', 500, userData)
-  })
+    console.error(err);
+    sendGeneralError(res,'500 Error','A server error occurred, please try again later',500,userData);
+  });
+  
+  if(locationList===undefined){
+    return;
+  }
 
   let locationProps = {
     'user': userData,
