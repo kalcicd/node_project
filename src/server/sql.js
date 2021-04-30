@@ -52,21 +52,21 @@ const addPendingData = (type, username, referenceLink, referenceId, updateChange
   const quotedValues = []
 
   updateKeys.forEach((key) => {
-    if(schema===undefined || schema.updatableFields===undefined){
-      reject(Error('Could not find the schema for the table'));
-		return;
+    if (schema === undefined || schema.updatableFields === undefined) {
+      reject(Error('Could not find the schema for the table'))
+      return
     }
     if (!schema.updatableFields.includes(key)) {
-      reject(Error(`Field '${key}' is not in the schema`));
-      return;
+      reject(Error(`Field '${key}' is not in the schema`))
+      return
     }
-    quotedValues.push(`'${updateChanges[key]}'`);
+    quotedValues.push(`'${updateChanges[key]}'`)
   })
-  let idField = "'"+referenceId+"'";
-  if(referenceId === null || referenceId === "") idField = "null";
-  const query = "INSERT INTO "+schema.pendingTableName+
-               "(username, referencelink, "+schema.idName+", "+updateKeys.join(', ')+") "+
-               "VALUES ('"+username+"', '"+referenceLink+"', "+idField+", "+quotedValues.join(', ')+")"
+  let idField = "'" + referenceId + "'"
+  if (referenceId === null || referenceId === '') idField = 'null'
+  const query = 'INSERT INTO ' + schema.pendingTableName +
+               '(username, referencelink, ' + schema.idName + ', ' + updateKeys.join(', ') + ') ' +
+               "VALUES ('" + username + "', '" + referenceLink + "', " + idField + ', ' + quotedValues.join(', ') + ')'
   console.log('QUERY: ', query)
   const response = await databasePool.query(query).catch((err) => reject(err))
   console.log('RESPONSE: ', response)
@@ -77,11 +77,10 @@ const getFormattedUpdates = (row, type) => {
   /* Takes a row from a database query and the type of update it is associated with and returns an
   array of updates in proper formatting for the frontend */
   const updateList = []
-  function formatDate(obj){
-    if(typeof(obj)==="object" && obj!==null && obj.toDateString!==undefined){
-      return obj.toDateString();
-    }
-    else return String(obj);
+  function formatDate (obj) {
+    if (typeof (obj) === 'object' && obj !== null && obj.toDateString !== undefined) {
+      return obj.toDateString()
+    } else return String(obj)
   }
   if (type === 'election') {
     if (row['newdate'] !== null) {
@@ -155,19 +154,18 @@ const updateField = (type, rowId, updates) => new Promise(async (resolve, reject
   /* Takes a type, rowId, and an object containing the updates to be made to a row in a table.
    Constructs and sends an query to update the given fields */
   const schema = tableDict[type]
-  let queryString;
-  if(rowId === 'null'){
-    //Create a new entry instead of modifying an existing one
-    let updateFields = [];
-    let updateValues = [];
-    updates.forEach((elem)=>{
-      updateFields.push(elem[0]);
-      updateValues.push(escapeSql(elem[1]));
-    });
-    queryString = `INSERT INTO ${schema.tableName} (${updateFields.join(',')}) VALUES (${updateValues.join(',')})`;
-  }
-  else{
-    //Modify an exsiting entry
+  let queryString
+  if (rowId === 'null') {
+    // Create a new entry instead of modifying an existing one
+    let updateFields = []
+    let updateValues = []
+    updates.forEach((elem) => {
+      updateFields.push(elem[0])
+      updateValues.push(escapeSql(elem[1]))
+    })
+    queryString = `INSERT INTO ${schema.tableName} (${updateFields.join(',')}) VALUES (${updateValues.join(',')})`
+  } else {
+    // Modify an exsiting entry
     let updateStrings = []
     updates.forEach((elem) => {
       let fieldName = elem[0]
@@ -176,10 +174,10 @@ const updateField = (type, rowId, updates) => new Promise(async (resolve, reject
     })
     queryString = `UPDATE ${schema.tableName} SET ${updateStrings.join(',')} WHERE ${schema.idName} = ${rowId}`
   }
-  console.log("QUERY:", queryString);
-  const response = await databasePool.query(queryString).catch((err) => reject(err));
-  console.log("RESPONSE:", response);
-  resolve(response);
+  console.log('QUERY:', queryString)
+  const response = await databasePool.query(queryString).catch((err) => reject(err))
+  console.log('RESPONSE:', response)
+  resolve(response)
 })
 
 const getPendingChanges = () => new Promise(async (resolve, reject) => {
@@ -206,7 +204,7 @@ const getPendingChanges = () => new Promise(async (resolve, reject) => {
       })
     }
   }
-  resolve(allPending);
+  resolve(allPending)
 })
 
 const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(async (resolve, reject) => {
@@ -224,19 +222,19 @@ const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(asy
 const deletePendingData = (updateIdStr) => new Promise(async (resolve, reject) => {
   /* Deletes a pending data row from the database */
   // extract the id and type from the given string
-  let type = updateIdStr.split('_')[0];
-  let id = updateIdStr.split('_')[1];
+  let type = updateIdStr.split('_')[0]
+  let id = updateIdStr.split('_')[1]
   // get table and id column names
-  const { pendingTableName, pendingIdName } = tableDict[type];
+  const { pendingTableName, pendingIdName } = tableDict[type]
   // todo: check for errors before sending query
   // send delete request
-  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`;
-  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) });
-  resolve(result);
+  let deleteQuery = `DELETE FROM ${pendingTableName} WHERE ${pendingIdName} = ${id}`
+  const result = await databasePool.query(deleteQuery).catch((err) => { reject(err) })
+  resolve(result)
 })
 
 const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) => {
-  let locationList = [];
+  let locationList = []
 
   // Format Query
   const queryString = 'SELECT a.gisidentifier, a.locationname, a.locationid, b.officetitle, c.name, c.holderid, d.levelnum' +
@@ -244,59 +242,59 @@ const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) =>
     ' JOIN Offices b ON a.locationid=b.locationid' +
     ' JOIN LocationTypes d ON a.typeid=d.typeid' +
     ' LEFT JOIN OfficeHolders c ON b.currentholder=c.holderid' +
-    ' WHERE a.gisidentifier = ANY ($1)';
-  const response = String(gisResponse);
-  let gisIdentifiers = response.split(',');
-  gisIdentifiers.push('USA');	//add federal level results (mainly the president)
+    ' WHERE a.gisidentifier = ANY ($1)'
+  const response = String(gisResponse)
+  let gisIdentifiers = response.split(',')
+  gisIdentifiers.push('USA') // add federal level results (mainly the president)
 
   // Send Query
-  console.log("QUERY:",queryString);
+  console.log('QUERY:', queryString)
   const locationRes = await databasePool.query(queryString, [gisIdentifiers]).catch((err) => {
-    console.error(err);
-    reject(err);
-  });
-  console.log("RESULT:",locationRes);
+    console.error(err)
+    reject(err)
+  })
+  console.log('RESULT:', locationRes)
 
   // make location list
-  if (locationRes['rows'] !== undefined){
-    locationList = locationRes['rows'];
-    resolve(locationList);
+  if (locationRes['rows'] !== undefined) {
+    locationList = locationRes['rows']
+    resolve(locationList)
   }
-  resolve(locationList);
+  resolve(locationList)
 })
 
 const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => {
   const queryString = 'SELECT * FROM OfficeHolders a, Offices b WHERE a.holderid=$1 AND a.holderid=b.currentholder'
   const officeRes = await databasePool.query(queryString, [queryId]).catch((err) => {
-    reject(err);
+    reject(err)
   })
 
-  function formatDate(date){
-    //Formats the date objects for termStart and termEnd into human-readable format
-    if(date!==null && date!==undefined && date.toDateString!==undefined){
-      return date.toDateString();
+  function formatDate (date) {
+    // Formats the date objects for termStart and termEnd into human-readable format
+    if (date !== null && date !== undefined && date.toDateString !== undefined) {
+      return date.toDateString()
     }
-    return null;
+    return null
   }
 
-  let officeholderVar = null;
+  let officeholderVar = null
   if (officeRes['rows'] !== undefined && officeRes['rows'][0] !== undefined) {
-    officeholderVar = {};
-    let sourceInfo = officeRes['rows'];
-    officeholderVar.officeholderName = sourceInfo[0]['name'];
-    officeholderVar.phone = sourceInfo[0]['contactphone'];
-    officeholderVar.email = sourceInfo[0]['contactemail'];
-    officeholderVar.meetings = sourceInfo[0]['contactmeeting'];
-    officeholderVar.holderId = sourceInfo[0]['holderid'];
-    officeholderVar.offices = [];
-    for(let i=0; i<sourceInfo.length; i++){
+    officeholderVar = {}
+    let sourceInfo = officeRes['rows']
+    officeholderVar.officeholderName = sourceInfo[0]['name']
+    officeholderVar.phone = sourceInfo[0]['contactphone']
+    officeholderVar.email = sourceInfo[0]['contactemail']
+    officeholderVar.meetings = sourceInfo[0]['contactmeeting']
+    officeholderVar.holderId = sourceInfo[0]['holderid']
+    officeholderVar.offices = []
+    for (let i = 0; i < sourceInfo.length; i++) {
       let newOffice = {}
-      newOffice.termStart = formatDate(sourceInfo[i]['termstart']);
-      newOffice.termEnd = formatDate(sourceInfo[i]['termend']);
-      newOffice.nextElection = sourceInfo[i]['nextelection'];
-      newOffice.officeTitle = sourceInfo[i].officetitle;
-      newOffice.officeId = sourceInfo[i].officeid;
-      officeholderVar.offices.push(newOffice);
+      newOffice.termStart = formatDate(sourceInfo[i]['termstart'])
+      newOffice.termEnd = formatDate(sourceInfo[i]['termend'])
+      newOffice.nextElection = sourceInfo[i]['nextelection']
+      newOffice.officeTitle = sourceInfo[i].officetitle
+      newOffice.officeId = sourceInfo[i].officeid
+      officeholderVar.offices.push(newOffice)
     }
   }
 
