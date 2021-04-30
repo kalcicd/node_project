@@ -22,5 +22,9 @@
     "address": "DATABASE ADDRESS",
     "user": "DATABASE USERNAME",
     "pass": "DATABASE PASSWORD"
+  },
+  "server":{
+    "port": "PORT_NUMBER",
+	 "address": "HOST_ADDRESS"
   }
 }
