@@ -12,7 +12,7 @@ export default class AboutAccount extends React.Component{
   render(){
     /* The user is assumed to be logged in in order to render this page */
     const userRow = this.props.userRow;
-    const userData = {"loggedIn":true,"isVerifier":userRow["isVerifier"],"username":userRow["username"]};
+    const userData = {"loggedIn":true,"isVerifier":userRow["isverifier"],"username":userRow["username"]};
     //fields for data groups
     const usernameGroup = [
       {"name":"Username","value":userRow.username,"modifiable":false},
@@ -22,6 +22,10 @@ export default class AboutAccount extends React.Component{
       {"name":"Email","value":userRow.email,"column":"email","modifiable":true,"inputType":"email","maxlength":300},
       {"name":"Phone","value":userRow.phone,"column":"phone","modifiable":true,"inputType":"tel","maxlength":15,"pattern":"^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$"}
     ];  //phone number regex from https://ihateregex.io/expr/phone/
+    const preferencesGroup = [
+      {"name":"Receive Emails When A Submission Is Rejected","value":"true","checked":userRow.wantsemails,"column":"wantsemails","modifiable":true,"inputType":"checkbox"},
+      {"inputType":"hidden","value":true,"modifiable":true,"column":"preferences"}
+    ];
     const addressGroup = [
       {"name":"Address Line 1","value":userRow.addressline1,"column":"addressline1","modifiable":true,"inputType":"text","maxlength":150},
       {"name":"Address Line 2","value":userRow.addressline2,"column":"addressline2","modifiable":true,"inputType":"text","maxlength":150},
@@ -78,6 +82,7 @@ export default class AboutAccount extends React.Component{
             </div>
           </div>
           <DataGroup fields={contactGroup} id="contact" />
+          <DataGroup fields={preferencesGroup} id="preferences" />
           <DataGroup fields={addressGroup} id="address" />
           <datalist id="states">
             {stateList}
@@ -95,7 +100,11 @@ export function DataGroup(props){
   //create table rows for the fields
   let fieldRows = [];
   props.fields.forEach((elem,i)=>{
+    if(elem.inputType === "hidden") return; //skip hidden inputs
     let value = (elem.value!==null && elem.value!==undefined)?elem.value:"<None>";
+    if(elem.inputType === "checkbox"){
+      value = (elem.checked)?"Yes":"No";
+    }
     fieldRows.push(
       <tr className={"row"+i%2} key={props.id+"Row"+i}>
         <td className="dataTableNameCell">{elem.name}</td>
@@ -113,9 +122,10 @@ export function DataGroup(props){
       fieldFormInputs.push(
         <label className="formLabel" key={props.id+"Label"+i}>
           {elem.name}
-          <input className="formInput" type={elem.inputType} defaultValue={elem.value}
+          <input className="formInput" type={elem.inputType} defaultValue={elem.value || undefined}
             name={elem.column} minLength={elem.minlength} maxLength={elem.maxlength} min={elem.min}
-            max={elem.max} pattern={elem.pattern} title={elem.title} list={elem.list} />
+            max={elem.max} pattern={elem.pattern} title={elem.title} list={elem.list} 
+            defaultChecked={elem.checked} />
         </label>
       );
     }

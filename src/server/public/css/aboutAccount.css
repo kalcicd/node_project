@@ -64,6 +64,12 @@
   font-size: 1.2rem;
   margin-left: 0.5rem;
 }
+.formInput[type="checkbox"]{
+  flex-grow: 0;
+  margin-left: auto;
+  position: relative;
+  left: 0.25rem;
+}
 .formSubmit{
   font-size: 1.3rem;
   display: block;

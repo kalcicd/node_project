@@ -52,15 +52,21 @@ const addPendingData = (type, username, referenceLink, referenceId, updateChange
   const quotedValues = []
 
   updateKeys.forEach((key) => {
-    if (!schema.updatableFields.includes(key)) {
-      reject(Error(`Field '${key}' is not in the schema`))
-      return
+    if(schema===undefined || schema.updatableFields===undefined){
+      reject(Error('Could not find the schema for the table'));
+		return;
     }
-    quotedValues.push(`'${updateChanges[key]}'`)
+    if (!schema.updatableFields.includes(key)) {
+      reject(Error(`Field '${key}' is not in the schema`));
+      return;
+    }
+    quotedValues.push(`'${updateChanges[key]}'`);
   })
-  const query = `INSERT INTO ${schema.pendingTableName}
-                 (username, referencelink, ${schema.idName}, ${updateKeys.join(', ')})
-                 VALUES ('${username}', '${referenceLink}', '${referenceId}', ${quotedValues.join(', ')})`
+  let idField = "'"+referenceId+"'";
+  if(referenceId === null || referenceId === "") idField = "null";
+  const query = "INSERT INTO "+schema.pendingTableName+
+               "(username, referencelink, "+schema.idName+", "+updateKeys.join(', ')+") "+
+               "VALUES ('"+username+"', '"+referenceLink+"', "+idField+", "+quotedValues.join(', ')+")"
   console.log('QUERY: ', query)
   const response = await databasePool.query(query).catch((err) => reject(err))
   console.log('RESPONSE: ', response)
@@ -71,9 +77,15 @@ const getFormattedUpdates = (row, type) => {
   /* Takes a row from a database query and the type of update it is associated with and returns an
   array of updates in proper formatting for the frontend */
   const updateList = []
+  function formatDate(obj){
+    if(typeof(obj)==="object" && obj!==null && obj.toDateString!==undefined){
+      return obj.toDateString();
+    }
+    else return String(obj);
+  }
   if (type === 'election') {
     if (row['newdate'] !== null) {
-      updateList.push(['datetime', String(row['datetime']), String(row['newdate'])])
+      updateList.push(['datetime', formatDate(row['datetime']), formatDate(row['newdate'])])
     }
     // this may result in a failure to update if new locationid does not already exist
     if (row['newLocation'] !== null) {
@@ -97,10 +109,10 @@ const getFormattedUpdates = (row, type) => {
       updateList.push(['officetitle', row['officetitle'], row['newtitle']])
     }
     if (row['newtermstart'] !== null) {
-      updateList.push(['termstart', row['termstart'], row['newtermstart']])
+      updateList.push(['termstart', formatDate(row['termstart']), formatDate(row['newtermstart'])])
     }
     if (row['newtermend'] !== null) {
-      updateList.push(['termend', row['termend'], row['newtermend']])
+      updateList.push(['termend', formatDate(row['termend']), formatDate(row['newtermend'])])
     }
   } else if (type === 'officeholder') {
     if (row['newname'] !== null) {
@@ -142,17 +154,32 @@ const getTitle = (row, type) => {
 const updateField = (type, rowId, updates) => new Promise(async (resolve, reject) => {
   /* Takes a type, rowId, and an object containing the updates to be made to a row in a table.
    Constructs and sends an query to update the given fields */
-  let updateStrings = []
   const schema = tableDict[type]
-  updates.forEach((elem) => {
-    let fieldName = elem[0]
-    let value = escapeSql(elem[1])
-    updateStrings.push(`${fieldName} = ${value}`)
-  })
-  const queryString = `UPDATE ${schema.tableName} SET ${updateStrings.join(',')} WHERE ${schema.idName} = ${rowId}`
-  const response = await databasePool.query(queryString).catch((err) => reject(err))
-  console.log(response)
-  resolve(response)
+  let queryString;
+  if(rowId === 'null'){
+    //Create a new entry instead of modifying an existing one
+    let updateFields = [];
+    let updateValues = [];
+    updates.forEach((elem)=>{
+      updateFields.push(elem[0]);
+      updateValues.push(escapeSql(elem[1]));
+    });
+    queryString = `INSERT INTO ${schema.tableName} (${updateFields.join(',')}) VALUES (${updateValues.join(',')})`;
+  }
+  else{
+    //Modify an exsiting entry
+    let updateStrings = []
+    updates.forEach((elem) => {
+      let fieldName = elem[0]
+      let value = escapeSql(elem[1])
+      updateStrings.push(`${fieldName} = ${value}`)
+    })
+    queryString = `UPDATE ${schema.tableName} SET ${updateStrings.join(',')} WHERE ${schema.idName} = ${rowId}`
+  }
+  console.log("QUERY:", queryString);
+  const response = await databasePool.query(queryString).catch((err) => reject(err));
+  console.log("RESPONSE:", response);
+  resolve(response);
 })
 
 const getPendingChanges = () => new Promise(async (resolve, reject) => {
@@ -160,7 +187,7 @@ const getPendingChanges = () => new Promise(async (resolve, reject) => {
   const allPending = []
   for (const type of Object.keys(tableDict)) {
     const { idName, tableName, pendingIdName, pendingTableName } = tableDict[type]
-    const query = `SELECT * FROM ${tableName} AS a JOIN ${pendingTableName} AS b ON a.${idName} = b.${idName}`
+    const query = `SELECT * FROM ${tableName} AS a RIGHT JOIN ${pendingTableName} AS b ON a.${idName} = b.${idName}`
     const { rows } = await databasePool.query(query).catch((err) => {
       reject(err)
     })
@@ -174,11 +201,12 @@ const getPendingChanges = () => new Promise(async (resolve, reject) => {
         'isNew': row[idName] === null,
         'reference': row['referencelink'],
         'updates': getFormattedUpdates(row, type),
-        'updateTarget': row[idName]
+        'updateTarget': row[idName],
+        'user': row['username']
       })
     }
   }
-  resolve(allPending)
+  resolve(allPending);
 })
 
 const updateData = (updateIdStr, updateTarget, updateChanges) => new Promise(async (resolve, reject) => {
@@ -211,38 +239,36 @@ const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) =>
   let locationList = [];
 
   // Format Query
-  const queryString = 'SELECT a.gisidentifier, b.officetitle, c.name, c.holderid, d.levelnum' +
-    ' FROM Locations a, Offices b, OfficeHolders c, LocationTypes d' +
-    ' WHERE a.gisidentifier = ANY ($1) AND a.locationid = b.locationid AND b.currentholder = c.holderid AND a.typeid = d.typeid';
+  const queryString = 'SELECT a.gisidentifier, a.locationname, a.locationid, b.officetitle, c.name, c.holderid, d.levelnum' +
+    ' FROM Locations a' +
+    ' JOIN Offices b ON a.locationid=b.locationid' +
+    ' JOIN LocationTypes d ON a.typeid=d.typeid' +
+    ' LEFT JOIN OfficeHolders c ON b.currentholder=c.holderid' +
+    ' WHERE a.gisidentifier = ANY ($1)';
   const response = String(gisResponse);
   let gisIdentifiers = response.split(',');
+  gisIdentifiers.push('USA');	//add federal level results (mainly the president)
 
   // Send Query
-  await databasePool.query('SELECT * FROM pendingelectionchanges').catch((err) => reject(err))
+  console.log("QUERY:",queryString);
   const locationRes = await databasePool.query(queryString, [gisIdentifiers]).catch((err) => {
-    console.error(err)
-    reject(err)
-  })
+    console.error(err);
+    reject(err);
+  });
+  console.log("RESULT:",locationRes);
 
   // make location list
-  if (locationRes['rows'] !== undefined) {
-    locationList = locationRes['rows']
-
-    locationList.push({
-      name: 'Joe Biden',
-      holderid: '0114',
-      officetitle: 'President',
-      levelnum: 0
-    })
-    resolve(locationList)
+  if (locationRes['rows'] !== undefined){
+    locationList = locationRes['rows'];
+    resolve(locationList);
   }
-  resolve(locationList)
+  resolve(locationList);
 })
 
 const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => {
   const queryString = 'SELECT * FROM OfficeHolders a, Offices b WHERE a.holderid=$1 AND a.holderid=b.currentholder'
   const officeRes = await databasePool.query(queryString, [queryId]).catch((err) => {
-    reject(err)
+    reject(err);
   })
 
   function formatDate(date){

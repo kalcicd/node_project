@@ -39,6 +39,8 @@ const session = require('express-session');
 // bcrypt for password hashing
 const bcrypt = require('bcrypt');
 const bcryptSaltRounds = 15;
+// nodemailer to send users emails
+const nodemailer = require('nodemailer');
 
 const databasePool = new Pool({
   host: config.postgresql.address,
@@ -61,6 +63,16 @@ app.use(session({
   saveUninitialized: false,
   cookie: {}
 }));
+
+// configure nodemailer
+const mail = nodemailer.createTransport({
+  service: config.mail.service,
+  auth: {
+    user: config.mail.username,
+    pass: config.mail.password
+  }
+});
+const mailTemplate = fs.readFileSync(path.join(__dirname,'./views/email.html'), 'utf8');
 
 const userLoginStatus = (req) => {
   // extracts the relevant user data from the active session and returns it in a dict
@@ -195,6 +207,13 @@ app.get('/verify', async (req, res, next) => {
 });
 app.post('/verify', async (req, res, next) => {
   const userStatus = userLoginStatus(req);
+  //check that the user is a verifier
+  if(userStatus.isVerifier === false){
+    sendGeneralError(
+      res,'Access Denied','You do not have permission to verify submissions',403,userStatus
+    );
+    return;
+  }
   // check that the required fields were passed
   let hasRequiredFields = req.body.id !== undefined;
   hasRequiredFields = hasRequiredFields && req.body.accept !== undefined;
@@ -203,15 +222,9 @@ app.post('/verify', async (req, res, next) => {
     sendGeneralError(res,'Missing Fields','The request was missing important fields',400,userStatus);
     return;
   }
-  //check that the user is a verifier
-  if(userStatus.isVerifier === false){
-    sendGeneralError(
-      res,'Access Denied','You do not have permission to verify submissions',403,userStatus
-    );
-    return;
-  }
   // update/create new data
   if (req.body.accept === 'true') {
+    // accept the submission
     let acceptSuccess = await updateData(
       req.body.id, req.body.updateTarget, req.body.updateChanges
     ).catch(() => {
@@ -220,10 +233,44 @@ app.post('/verify', async (req, res, next) => {
     if (acceptSuccess !== undefined) res.status(200).send('');
   }
   else {
-    let deleteSuccess = await deletePendingData(req.body.id).catch(() => {
+    // reject the submission
+    const deleteSuccess = await deletePendingData(req.body.id).catch(() => {
       sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
     });
-    if (deleteSuccess !== undefined) res.status(200).send('');
+    if (deleteSuccess !== undefined){
+      // fetch the data about the submission user
+      let submitUser = await databasePool.query(
+        'SELECT * FROM Users WHERE username=$1', [req.body.submissionUser]
+      ).catch(()=>{
+        sendGeneralError(res,'500 Server Error','A server error occurred, please try again');
+      });
+      submitUser = submitUser.rows[0];
+      // check that the user has an email and the user wants to receive emails
+      if(submitUser.email !== null && submitUser.email.length > 0 && submitUser.wantsemails === true){
+        //create the email from the template
+        let mailHtml = mailTemplate.replace("<!-- REASON -->",req.body.reason);
+        if(submitUser.name !== null && submitUser.name.length > 0){
+          mailHtml = mailHtml.replace("<!-- NAME -->",submitUser.name);
+        }
+        else{
+          mailHml = mailHtml.replace("<!-- NAME -->",submitUser.username);
+        }
+        //send the user an email
+        const mailOptions = {
+          from: config.mail.username,
+          to: submitUser.email,
+          subject: "NODE Project: Submission Rejected",
+          html: mailHtml
+        };
+        mail.sendMail(mailOptions,(err,inf) => {
+          if(err){
+            console.log("Failed to send rejection email to "+submitUser.username);
+          }
+        });
+      }
+      // send the submission user an email
+      res.status(200).send('');
+    }
   }
 });
 
@@ -357,9 +404,7 @@ app.post('/newAccount', async (req, res, next) => {
 app.get('/aboutme', async (req,res,next) => {
   const userStatus = userLoginStatus(req);
   if(userStatus.loggedIn === false){  //check if the user is not logged in
-    sendGeneralError(
-      res,'Not Logged In','You must be logged in to access this page',403,userStatus
-    );
+    res.status(304).redirect("/login?redirect=/aboutme");
     return;
   }
   //fetch user data from the database
@@ -472,8 +517,31 @@ app.post("/updateAccount", async (req,res,next) => {
     let queryStr = "UPDATE Users SET ";
     possibleFields.forEach((elem) => {
       if(req.body.hasOwnProperty(elem)){
-        queryStr += elem + "='" + req.body[elem] + "',";
+        if(req.body[elem].length === 0){
+          //if the new value is an empty string, set the database value to null
+          queryStr += elem + "=NULL,";
+        }
+        else{
+          queryStr += elem + "='" + req.body[elem] + "',";
+        }
       }
+    });
+    queryStr = queryStr.slice(0,-1);  //remove trailing comma
+    queryStr += " WHERE username='" + userStatus.username + "';";
+    //add a query for the update information
+    queryStr += " SELECT * FROM Users WHERE username='" + userStatus.username + "';";
+    //send the query to the database
+    updateUserData(queryStr,oldUserData);
+    return;
+  }
+
+  //check if the user's preferences were updated
+  if(req.body.hasOwnProperty("preferences")){
+    const possibleColumns = ["wantsemails"];
+    let queryStr = "UPDATE Users SET ";
+    possibleColumns.forEach((elem) => {
+      let newColValue = (req.body.hasOwnProperty(elem))?"TRUE":"FALSE";
+      queryStr += elem + "=" + newColValue + ",";
     });
     queryStr = queryStr.slice(0,-1);  //remove trailing comma
     queryStr += " WHERE username='" + userStatus.username + "';";
@@ -514,7 +582,7 @@ app.post("/updateAccount", async (req,res,next) => {
     let page = template.replace("<!-- CONTENT -->",renderedContent);
     page = page.replace("<!-- STYLESHEET -->", "/css/aboutAccount.css");
     page = page.replace('<!--SCRIPT-->', '<script src="/js/aboutAccount.js" defer></script>');
-    req.status(200).send(page);
+    res.status(200).send(page);
   }
 });
 
@@ -596,26 +664,32 @@ app.get('/logout', (req, res, next) => {
 
 // Handle submission of pending data
 app.post('/submit', async (req, res) => {
-  const userStatus = userLoginStatus(req)
-  const { table, referenceLink, id } = req.body
-  let updateChanges = Object.assign({}, req.body)
-  delete updateChanges['table']
-  delete updateChanges['referenceLink']
-  delete updateChanges['id']
-  console.log(table, referenceLink, id, updateChanges)
+  const userStatus = userLoginStatus(req);
+  const { table, referenceLink, id } = req.body;
+  //Extract the redirect location if it exists
+  let redirect = '/';
+  if(req.body.hasOwnProperty('redirect')) redirect = req.body.redirect;
+  //Create a copy of the post properties
+  let updateChanges = Object.assign({}, req.body);
+  delete updateChanges['table'];
+  delete updateChanges['referenceLink'];
+  delete updateChanges['id'];
+  delete updateChanges['redirect'];
+  //Check that the user is logged in
   if (userStatus.loggedIn) {
+    //Check for the required fields
     for (const field of ['table', 'referenceLink', 'id']) {
       if (req.body[field] === undefined) {
         sendGeneralError(res,'Missing Field',`Required field '${field}' is missing`,400,userStatus);
         return;
       }
     }
-    await addPendingData(table, userStatus['username'], referenceLink, id, updateChanges).catch((err) => {
+    await addPendingData(table,userStatus['username'],referenceLink,id,updateChanges).catch((err) => {
       console.error(err);
       sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userStatus);
-      return
+      return;
     })
-    res.status(200).redirect('/')
+    res.status(200).redirect(redirect);
   } else {
     sendGeneralError(res,'Permission Denied','You must be logged in to suggest updates',403,userStatus);
   }
@@ -624,10 +698,9 @@ app.post('/submit', async (req, res) => {
 app.get('/location', async (req, res, next) => {
   //Check that the latitude and longitude were passed
   const { lat, lng } = req.query;
-  console.log('lat = ', lat);
-  console.log('lng = ', lng);
   if (lat === undefined || lng === undefined) {
-    return res.redirect('/404');
+    res.redirect('/404');
+    return;
   }
 
   const userData = userLoginStatus(req);
@@ -637,57 +710,45 @@ app.get('/location', async (req, res, next) => {
     console.error(err);
     sendGeneralError(res,'500 Error','A server error occurred, please try again',500,userData);
   });
-  console.log('GIS Response: ' + gisResponse);
 
   const locationList = await getLocationProps(gisResponse).catch((err) => {
     console.error(err);
     sendGeneralError(res,'500 Error','A server error occurred, please try again later',500,userData);
   });
 
-  const locationProps = {
-    federal: [],
-    state: [],
-    county: [],
-    city: [],
-    school: [],
-    local: [],
-    other: [],
-    lat,
-    lng
-  }
+  let locationProps = {
+    'user': userData,
+    'levels': [
+      {'name':'Federal','results':[]},
+      {'name':'State','results':[]},
+      {'name':'County','results':[]},
+      {'name':'City','results':[]},
+      {'name':'School','results':[]},
+      {'name':'Local','results':[]},
+      {'name':'Other','results':[]}
+    ],
+    'locations':[],
+    'lat': lat,
+    'lng': lng
+  };
 
-  for (let i = 0; i < locationList.length; i++) {
-    const loc = locationList[i];
-    let prop;
-    switch (loc.levelnum) {
-      case 0:
-        prop = locationProps.federal;
-        break;
-      case 1:
-        prop = locationProps.state;
-        break;
-      case 2:
-        prop = locationProps.county;
-        break;
-      case 3:
-        prop = locationProps.city;
-        break;
-      case 4:
-        prop = locationProps.school;
-        break;
-      case 5:
-        prop = locationProps.local;
-        break;
-      default:
-        prop = locationProps.other;
-        break;
-    }
-    prop.push({
-      title: loc.officetitle,
-      name: loc.name,
-      id: `/officeholder/${loc.holderid}`
+  //add reurned locations to the level arrays
+  Array(locationList)[0].forEach((loc,i)=>{
+    //add the database location ot the locations array
+    locationProps.locations.push({
+      'name': loc.locationname,
+      'id': loc.locationid
     });
-  }
+    //add the result to the results array
+    const levelInd = (locationProps.levels.length <= loc.levelnum)?6:loc.levelnum;
+    locationProps.levels[levelInd].results.push({
+      'title': loc.officetitle,
+      'name': loc.name,
+      'id': loc.holderid
+    });
+  });
+
+  //render the page
   const renderedContent = renderToString(React.createElement(Location, locationProps));
   let page = template.replace('<!-- CONTENT -->', renderedContent);
   page = page.replace('<!-- STYLESHEET -->', '/css/location.css');
@@ -696,6 +757,7 @@ app.get('/location', async (req, res, next) => {
 });
 
 app.get('/officeholder/:officeholderId', async (req, res, next) => {
+  const userData = userLoginStatus(req);
   const { officeholderId } = req.params;
   let officeholderProps = await getOfficeholderData(officeholderId).catch((err) => {
     if (err.code === '22P02') {
@@ -703,12 +765,14 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
       sendGeneralError(res,'Not Found','Could not find the requested location in the database',404,userData);
       return;
     }
-	 //todo: replace this with the sending the error page
    sendGeneralError(res,'Server Error','A server error occurred, please try again',500,userData);
     return;
   });
   //todo: check if getOfficeholderData failed
-  console.log(officeholderProps);
+  if(officeholderProps===undefined || officeholderProps===null){
+    res.redirect('/404');
+    return;
+  }
 
   officeholderProps.user = userData;
 
