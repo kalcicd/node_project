@@ -771,8 +771,8 @@ app.get('/officeholder/:officeholderId', async (req, res, next) => {
 
 app.get('/search', (req, res, next) => {
   const address = req.query.q
-  if (address === undefined) { // search query must be present for this endpoint or else we 404
-    return res.redirect('/404')
+  if (!address) { // search query must be present for this endpoint or else we 404
+    return res.redirect('/')
   }
   const geocodingConfig = config.geocoding
   axios.get(geocodingConfig.apiUrl, {
