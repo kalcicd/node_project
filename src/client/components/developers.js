@@ -3,13 +3,13 @@ import Title from './title'
 
 export default function Developers (props) {
   return (
-    <div id="app">
-      <Title user={props.user}/>
-      <div id="mainColumn">
-        <h2 className="pageHeader">Developers</h2>
-        <p className="mainColumnText">
+    <div id='app'>
+      <Title user={props.user} />
+      <div id='mainColumn'>
+        <h2 className='pageHeader'>Developers</h2>
+        <p className='mainColumnText'>
           Interested in using our data for your own awesome civic tech project? Awesome! All of our
-          data is available under the open source MIT License -<span> </span>
+          data is available under the open source MIT License -<span />
           <a href='https://mit-license.org/'>
             details to be found here
           </a>
