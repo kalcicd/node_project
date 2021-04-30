@@ -253,7 +253,7 @@ app.post('/verify', async (req, res, next) => {
           mailHtml = mailHtml.replace("<!-- NAME -->",submitUser.name);
         }
         else{
-          mailHml = mailHtml.replace("<!-- NAME -->",submitUser.username);
+          mailHtml = mailHtml.replace("<!-- NAME -->",submitUser.username);
         }
         //send the user an email
         const mailOptions = {
