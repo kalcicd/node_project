@@ -56,7 +56,6 @@ export class LocationLevel extends React.Component {
     let bodyId = this.props.level + 'Results'
     // create the list of results
     let results = []
-    console.log(this.props.levelResults)
     this.props.levelResults.forEach((loc) => {
       let officeHolderLink = <span>Not currently occupied</span>
       if (loc.name !== null) {
