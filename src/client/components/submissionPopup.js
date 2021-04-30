@@ -4,7 +4,7 @@ export default function SubmissionPopup (props) {
   if (props.user === undefined || props.user.loggedIn !== true) {
     return null
   }
-  //generate the selection options
+  // generate the selection options
   let selectOptions = []
   switch (props.page) {
     case 'officeholder':
@@ -70,8 +70,8 @@ export default function SubmissionPopup (props) {
       })
       break
     case 'location':
-      selectOptions = [];
-      props.currentValues.locations.forEach((elem,i)=>{
+      selectOptions = []
+      props.currentValues.locations.forEach((elem, i) => {
         selectOptions.push({
           'name': 'New ' + elem.name + ' Office',
           'rowName': 'newtitle',
@@ -80,13 +80,13 @@ export default function SubmissionPopup (props) {
           'type': 'text',
           'table': 'office',
           'tableId': null,
-          'otherInformation':{
+          'otherInformation': {
             'newlocationid': elem.id,
             'newtermstart': (new Date(Date.now())).toDateString(),
-            'newtermend': (new Date(Date.now()+86400000)).toDateString()
+            'newtermend': (new Date(Date.now() + 86400000)).toDateString()
           }
-        });
-      });
+        })
+      })
       break
   }
   // create option tags to be placed into the dropdown select
@@ -98,7 +98,7 @@ export default function SubmissionPopup (props) {
         {elem.name}
       </option>
     )
-  });
+  })
   return (
     <div id='submissionPopupWrapper' className='hidden'>
       <form id='submissionPopupBody' method='POST' action='/submit'>

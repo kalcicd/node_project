@@ -3,10 +3,10 @@ import Title from './title'
 
 export default function AboutUs (props) {
   return (
-    <div id="app">
-      <Title user={props.user}/>
-      <div id="mainColumn">
-        <h2 className="pageHeader">About Us</h2>
+    <div id='app'>
+      <Title user={props.user} />
+      <div id='mainColumn'>
+        <h2 className='pageHeader'>About Us</h2>
         <p>
           This project was started with an OSU Capstone Project for CS 461. The inital developers
           were Davic Kalcic, Owen Haggerty, and Matt Kerr. The Project Managers were Emily
@@ -19,7 +19,7 @@ export default function AboutUs (props) {
         </p>
         <p>
           Questions? Comments? You can reach us at
-			 <a href="mailto:info@nodeproject.org"> info@nodeproject.org</a>
+          <a href='mailto:info@nodeproject.org'> info@nodeproject.org</a>
         </p>
       </div>
     </div>
