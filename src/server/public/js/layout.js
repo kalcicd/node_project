@@ -68,8 +68,8 @@ function updateSubmissionPopupInput(){
 	const options = document.getElementsByClassName("submissionPopupOption");
 	//Delete any old 'otherInformation' inputs
 	let oldInputs = document.getElementsByClassName("submissionOtherInformationInput");
-	for(let i=0; i<oldInputs.length; i++){
-		oldInputs[i].remove();
+	while(oldInputs.length > 0){
+		oldInputs[0].remove();
 	}
 	//Find which option is selected
 	let selectedOption = null;

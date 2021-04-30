@@ -82,8 +82,8 @@ export default function SubmissionPopup (props) {
           'tableId': null,
           'otherInformation':{
             'newlocationid': elem.id,
-            'newtermstart': (new Date(Date.now())).toDateString(),
-            'newtermend': (new Date(Date.now()+86400000)).toDateString()
+            'newtermstart': new Date(Date.now()),
+            'newtermend': new Date(Date.now()+86400000)
           }
         });
       });
