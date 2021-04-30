@@ -79,3 +79,24 @@ export function Office(props){
     </div>
   )
 }
+
+export class OfficeholderProperty extends React.Component {
+  constructor (props) {
+    super(props)
+    this.submitReport = this.submitReport.bind(this)
+  }
+  submitReport () {
+    console.log('boop.')
+  }
+  render () {
+    const isUnavailable = (this.props.value === null)
+    const value = (isUnavailable) ? 'Data Unavailable' : this.props.value
+    return (
+      <div id='officeholderProperty'>
+        <h3 className='infoHeader'>{this.props.title}</h3>
+        <button className='reportButton' onClick={this.submitReport}>Incorrect or Unavailable?</button>
+        <div className='infoDiv'>{value}</div>
+      </div>
+    )
+  }
+}
