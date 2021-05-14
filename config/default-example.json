@@ -25,6 +25,6 @@
   },
   "server":{
     "port": "PORT_NUMBER",
-	 "address": "HOST_ADDRESS"
+    "address": "HOST_ADDRESS"
   }
 }
