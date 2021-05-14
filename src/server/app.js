@@ -29,7 +29,9 @@ import {
   deletePendingData,
   getOfficeholderData,
   getLocationProps,
-  addPendingData
+  addPendingData,
+  accountExists,
+  createAccount
 } from './sql'
 
 const pathToTemplate = path.join(__dirname, './views/layout.html')
@@ -203,6 +205,7 @@ app.get('/verify', async (req, res, next) => {
   page = page.replace('<!--SCRIPT-->', '<script src="/js/verify.js" defer></script>')
   res.status(200).send(page)
 })
+
 app.post('/verify', async (req, res, next) => {
   const userStatus = userLoginStatus(req)
   // check that the user is a verifier
@@ -288,112 +291,80 @@ app.get('/newAccount', (req, res, next) => {
 })
 // Handle new account creation
 app.post('/newAccount', async (req, res, next) => {
-  function accountCreationFailed (reason) {
+  const userStatus = userLoginStatus(req)
+
+  const accountCreationFailed = (reason) => {
     const renderedContent = renderToString(<NewAccount hasError errorReason={reason} />)
     let page = template.replace('<!-- CONTENT -->', renderedContent)
     page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
     res.status(400).send(page)
   }
 
+  const { username, email, pass, pass2, phone, address, address2, city, state, zip } = req.body
+
   // check that all required fields were passed
   let hasRequiredFields = true
-  hasRequiredFields = hasRequiredFields && (req.body['username'] !== undefined && req.body['username'] !== '')
-  hasRequiredFields = hasRequiredFields && (req.body['email'] !== undefined && req.body['email'] !== '')
-  hasRequiredFields = hasRequiredFields && (req.body['pass'] !== undefined && req.body['pass'] !== '')
-  hasRequiredFields = hasRequiredFields && (req.body['pass2'] !== undefined && req.body['pass2'] !== '')
+  hasRequiredFields = hasRequiredFields && (username !== undefined && username !== '')
+  hasRequiredFields = hasRequiredFields && (email !== undefined && email !== '')
+  hasRequiredFields = hasRequiredFields && (pass !== undefined && pass !== '')
+  hasRequiredFields = hasRequiredFields && (pass2 !== undefined && pass2 !== '')
+
   if (!hasRequiredFields) {
-    accountCreationFailed('Not all required fields were filled')
-    return
-  }
-  // check username is unique
-  let existingUser = await databasePool.query(
-    'SELECT * FROM Users WHERE username=$1', [req.body.username]
-  )
-  if (existingUser['rows'].length > 0) {
-    accountCreationFailed('The username is already taken')
+    accountCreationFailed('Missing Required field(s)')
     return
   }
   // check that the password and confirm password field match
-  if (req.body.pass !== req.body.pass2) {
+  if (pass !== pass2) {
     accountCreationFailed('The password and confirm password fields do not match')
     return
   }
-  // hash password for storage in the database
-  bcrypt.hash(req.body.pass, bcryptSaltRounds, (err, hash) => {
-    if (err) { // show an error page to the user if hashing the password failed
-      // todo: log error output to console or file
-      sendGeneralError(
-        res, '500 Internal Server Error',
-        'An error occurred while creating the user, please try again or contact an administrator if the problem persists',
-        500
+
+  if (address !== '' || city !== '' || zip !== '') {
+    if (address === '' || city === '' || state === undefined || zip === '') {
+      // send an error that only part of the address was filled out
+      const errorContent = renderToString(
+        <NewAccount hasError
+          errorMessage='Only some of the address fields were filled out, please either fill out all of the fields or leave them all blank' />
       )
-    } else {
-      /*
-        newUserQuery is a string which is passed to the databasePool.query function
-        newUserData is a list which contains the data associated with the query in the order specified
-        in newUserQuery
-      */
-      let newUserQuery = 'INSERT INTO Users (username,email,passwd'
-      let newUserData = [req.body['username'], req.body['email'], hash]
-      if (req.body['name'] !== '') { // check if the Name field was filled
-        newUserQuery += ',name'
-        newUserData.push(req.body.name)
-      }
-      if (req.body['phone'] !== '') { // check if the Phone Number field was filled
-        newUserQuery += ',phone'
-        // reduce the phone number to only decimal digits
-        let reducedPhoneNumber = String(req.body['phone']).replace(/[^0-9]/g, '')
-        newUserData.push(reducedPhoneNumber)
-      }
-      if (req.body['address'] !== '' || req.body['city'] !== '' || req.body['zip'] !== '') {
-        if (req.body['address'] === '' || req.body['city'] === '' || req.body.state === undefined || req.body['zip'] === '') {
-          // send an error that only part of the address was filled out
-          const errorContent = renderToString(<NewAccount hasError
-            errorMessage='Only some of the address fields were filled out, please either fill out all of the fields or leave them all blank' />)
-          let page = template.replace('<!-- CONTENT -->', errorContent)
-          page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
-          res.status(400).send(page)
-        }
-        newUserQuery += ',addressline1,addresscity,addressstate,addresszip'
-        newUserData.push(req.body['address'])
-        newUserData.push(req.body['city'])
-        newUserData.push(req.body['state'])
-        newUserData.push(req.body['zip'])
-        if (req.body['address2'] !== '') {
-          newUserQuery += ',addressline2'
-          newUserData += newUserData.push(req.body['address2'])
-        }
-      }
-      // finish query string with formatting indicators ($1,$2,etc.)
-      newUserQuery += ') VALUES ($1,$2,$3'
-      for (let i = 3; i < newUserData.length; i++) {
-        newUserQuery += ',$' + String(i + 1)
-      }
-      newUserQuery += ');'
-      // add the new user to the database
-      databasePool.query(newUserQuery, newUserData, (err, queryRes) => {
-        if (err) { // an error occurred while inserting the values into the database
-          // log the error
-          console.error('An error occurred while adding a user to the database:')
-          console.error('\tQuery:' + newUserQuery)
-          console.error('\tData:' + String(newUserData))
-          console.error('\tError:' + err)
-          // send an error message
-          const errorContent = renderToString(<NewAccount hasError
-            errorMessage='A server error occurred, please try again' />)
-          let page = template.replace('<!-- CONTENT -->', errorContent)
-          page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
-          res.status(500).send(page)
-        } else {
-          // send success page
-          const renderedContent = renderToString(<AccountCreated />)
-          let page = template.replace('<!-- CONTENT -->', renderedContent)
-          page = page.replace('<!-- STYLESHEET -->', '/css/accountCreated.css')
-          res.status(200).send(page)
-        }
-      })
+      let page = template.replace('<!-- CONTENT -->', errorContent)
+      page = page.replace('<!-- STYLESHEET -->', '/css/newAccount.css')
+      res.status(400).send(page)
+      return
     }
+  }
+
+  // check username is unique
+  const exists = await accountExists(username).catch((err) => {
+    sendGeneralError(res, '500 Internal Server Error', err, 500, userStatus)
   })
+
+  if (exists) {
+    accountCreationFailed('The username is already taken')
+    return
+  }
+
+  const userData = {
+    username,
+    email,
+    passwd: pass,
+    phone: (phone !== '') ? String(phone).replace(/[^0-9]/g, '') : null,
+    addressline1: (address !== '') ? address : null,
+    addressline2: (address2 !== '') ? address2 : null,
+    addresscity: (city !== '') ? city : null,
+    addressstate: state,
+    addresszip: (zip !== '') ? zip : null,
+    wantsemails: true
+  }
+
+  await createAccount(userData).catch((err) => {
+    sendGeneralError(res, '500 Internal Server Error', err, 500, userStatus)
+  })
+
+  // send success page
+  const renderedContent = renderToString(<AccountCreated />)
+  let page = template.replace('<!-- CONTENT -->', renderedContent)
+  page = page.replace('<!-- STYLESHEET -->', '/css/accountCreated.css')
+  res.status(200).send(page)
 })
 
 // About user page
