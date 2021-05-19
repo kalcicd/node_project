@@ -1,5 +1,6 @@
 import config from '../../config/default.json'
 import { Pool } from 'pg'
+import bcrypt from 'bcrypt'
 
 const databasePool = new Pool({
   host: config.postgresql.address,
@@ -301,6 +302,35 @@ const getOfficeholderData = (queryId) => new Promise(async (resolve, reject) => 
   resolve(officeholderVar)
 })
 
+const accountExists = (username) => new Promise(async (resolve, reject) => {
+  const existingUser = await databasePool.query('SELECT * FROM Users WHERE username=$1', [username]).catch((err) => reject(err))
+  if (existingUser['rows'].length > 0) {
+    resolve(true)
+  } else {
+    resolve(false)
+  }
+})
+
+const createAccount = (userData) => new Promise(async(resolve, reject) => {
+  const errorMessage = Error('A server error occurred, please try again later')
+
+  // hash the password
+  userData.passwd = await bcrypt.hash(userData.passwd, 15).catch(() => reject(errorMessage))
+  let valueString = []
+  const fields = Object.keys(userData)
+  const values = Object.values(userData)
+  values.forEach((value, index) => {
+    valueString.push(`$${index + 1}`)
+  })
+  const queryString = `INSERT INTO Users (${fields.join(', ')}) VALUES (${valueString.join(', ')})`
+
+  // query DB
+  const response = await databasePool.query(queryString, values).catch(() => {
+    reject(errorMessage)
+  })
+  resolve(response)
+})
+
 export {
   updateField,
   getPendingChanges,
@@ -308,5 +338,7 @@ export {
   getOfficeholderData,
   updateData,
   deletePendingData,
-  addPendingData
+  addPendingData,
+  accountExists,
+  createAccount
 }
