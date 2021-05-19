@@ -672,11 +672,17 @@ app.get('/location', async (req, res, next) => {
     console.error(err);
     sendGeneralError(res, '500 Error', 'A server error occurred, please try again', 500, userData);
   });
+  if(gisResponse===undefined){
+    return;
+  }
 
   const locationList = await getLocationProps(gisResponse).catch((err) => {
     console.error(err);
-    sendGeneralError(res, '500 Error', 'A server error occurred, please try again later', 500, userData);
+    sendGeneralError(res,'500 Error','A server error occurred, please try again later',500,userData);
   });
+  if(locationList===undefined){
+    return;
+  }
 
   let locationProps = {
     'user': userData,
