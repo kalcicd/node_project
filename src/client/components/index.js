@@ -7,6 +7,9 @@ export default function Index (props) {
     <div id='app'>
       <Title user={props.user} />
       <div id='mainColumn'>
+        <h3 id='searchBarDescription'>
+          Enter Address, See Representatives
+        </h3>
         <SearchBar />
         <div id='descriptionText'>
           <p>

@@ -2,12 +2,15 @@
   width: max-content;
   max-width: 95%;
   margin: 0 auto;
+  text-align: right;
 }
 .infoHeader,.officeHeader{
   font-size: 1.6rem;
+  text-align: right;
 }
 .infoDiv{
   font-size: 1.3rem;
+  text-align: right;
 }
 .reportButtonWrapper{
   margin: 0.5rem auto;
@@ -15,7 +18,7 @@
 }
 .reportButton{
   font-size: 1rem;
-  float: right;
+  /*float: right;*/
 }
 
 #mapContent {
