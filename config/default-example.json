@@ -3,6 +3,11 @@
     "apiUrl": "https://maps.googleapis.com/maps/api/geocode/json",
     "apiKey": "KEY HERE"
   },
+  "mail": {
+    "service": "gmail",
+    "username": "USER_NAME@gmail.com",
+    "password": "YOUR PASSWORD"
+  },
   "mapsStatic": {
     "apiUrl": "https://maps.googleapis.com/maps/api/staticmap",
     "apiKey": "KEY HERE"
@@ -17,5 +22,9 @@
     "address": "DATABASE ADDRESS",
     "user": "DATABASE USERNAME",
     "pass": "DATABASE PASSWORD"
+  },
+  "server":{
+    "port": "PORT_NUMBER",
+    "address": "HOST_ADDRESS"
   }
 }

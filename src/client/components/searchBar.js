@@ -1,12 +1,12 @@
 import React from 'react'
 
-export default class SearchBar extends React.Component{
-  constructor(props){
-    super(props);
+export default class SearchBar extends React.Component {
+  constructor (props) {
+    super(props)
   }
 
-  render(){
-    return(
+  render () {
+    return (
       <form action='/search' method='GET' id='searchBarWrapper'>
         <button type='submit' id='searchButton'>
           <img src='/icons/search.svg' id='searchIcon' />

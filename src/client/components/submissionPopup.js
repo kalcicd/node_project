@@ -4,6 +4,7 @@ export default function SubmissionPopup (props) {
   if (props.user === undefined || props.user.loggedIn !== true) {
     return null
   }
+  // generate the selection options
   let selectOptions = []
   switch (props.page) {
     case 'officeholder':
@@ -49,7 +50,7 @@ export default function SubmissionPopup (props) {
         // add option to update termStart
         selectOptions.push({
           'name': 'Term start date for ' + elem.officeTitle,
-          'rowName': 'termstart',
+          'rowName': 'newtermstart',
           'maxlength': null,
           'pattern': null,
           'type': 'date',
@@ -59,7 +60,7 @@ export default function SubmissionPopup (props) {
         // add option to update termEnd
         selectOptions.push({
           'name': 'Term end date for ' + elem.officeTitle,
-          'rowName': 'termend',
+          'rowName': 'newtermend',
           'maxlength': null,
           'pattern': null,
           'type': 'date',
@@ -68,7 +69,24 @@ export default function SubmissionPopup (props) {
         })
       })
       break
-    case 'search':
+    case 'location':
+      selectOptions = []
+      props.currentValues.locations.forEach((elem, i) => {
+        selectOptions.push({
+          'name': 'New ' + elem.name + ' Office',
+          'rowName': 'newtitle',
+          'maxlength': 100,
+          'pattern': null,
+          'type': 'text',
+          'table': 'office',
+          'tableId': null,
+          'otherInformation': {
+            'newlocationid': elem.id,
+            'newtermstart': new Date(Date.now()),
+            'newtermend': new Date(Date.now() + 86400000)
+          }
+        })
+      })
       break
   }
   // create option tags to be placed into the dropdown select
@@ -93,8 +111,8 @@ export default function SubmissionPopup (props) {
             {optionTags}
           </select>
         </label>
-        <input name='table' id='submissionPopupTable' className='hidden' />
-        <input name='id' id='submissionPopupId' className='hidden' />
+        <input name='table' id='submissionPopupTable' className='hidden' type='hidden' />
+        <input name='id' id='submissionPopupId' className='hidden' type='hidden' />
         <label id='submissionInputWrapper' className='submissionPopupRow'>
           New Value
           <input id='submissionPopupInput' />
@@ -103,6 +121,7 @@ export default function SubmissionPopup (props) {
           Reference Source Link
           <input type='url' id='submissionPopupReference' name='referenceLink' />
         </label>
+        <input name='redirect' className='hidden' type='hidden' defaultValue={props.redirect} />
         <div id='submissionPopupButtonWrapper' className='submissionPopupRow'>
           <button id='submissionPopupCancelButton' className='submissionPopupButton' type='button'>
             Cancel

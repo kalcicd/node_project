@@ -30,7 +30,7 @@ const popupCancel = document.getElementById("submissionPopupCancelButton");
 if(popupCancel !== null) popupCancel.addEventListener("click",hideSubmissionPopup);
 
 function redirectToLogin(){
-	const path = window.location.pathname;
+	const path = window.location.pathname + window.location.search;
 	const newPath = "/login?redirect="+escape(path);
 	window.open(newPath,"_self");
 }
@@ -66,8 +66,13 @@ function updateSubmissionPopupInput(){
 	/*This function should be called in order to update the type of the input field in the submission
 	popup*/
 	const options = document.getElementsByClassName("submissionPopupOption");
-	let selectedOption = null;
+	//Delete any old 'otherInformation' inputs
+	let oldInputs = document.getElementsByClassName("submissionOtherInformationInput");
+	while(oldInputs.length > 0){
+		oldInputs[0].remove();
+	}
 	//Find which option is selected
+	let selectedOption = null;
 	for(let i=0; i<options.length; i++){
 		if(options[i].selected){
 			selectedOption = options[i];
@@ -87,6 +92,18 @@ function updateSubmissionPopupInput(){
 	//Set the values on the hidden inputs
 	document.getElementById("submissionPopupTable").value = description.table;
 	document.getElementById("submissionPopupId").value = description.tableId;
+	//Add any 'otherInformation' inputs
+	if(description.otherInformation !== undefined){
+		for(let i=0; i<Object.keys(description.otherInformation).length; i++){
+			const curInfo = Object.keys(description.otherInformation)[i];
+			let newInput = document.createElement('input');
+			newInput.classList.add('submissionOtherInformationInput');
+			newInput.setAttribute("type","hidden");
+			newInput.setAttribute("name",curInfo);
+			newInput.value = description.otherInformation[curInfo];
+			document.getElementById("submissionPopupBody").appendChild(newInput);
+		}
+	}
 	//Modify the input
 	const input = document.getElementById("submissionPopupInput");
 	input.setAttribute("type",description.type);

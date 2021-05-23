@@ -9,6 +9,7 @@ function acceptOrRejectSubmission(submissionObject){
   postString += "&reason="+submissionObject.reason;
   postString += "&updateTarget="+submissionObject.updateTarget;
   postString += "&updateChanges="+submissionObject.updateChanges;
+  postString += "&submissionUser="+submissionObject.submissionUser;
   //create callback function for failure
   let failureCallback = (reason)=>{
     //todo: create more polished solution
@@ -72,9 +73,15 @@ submissions.forEach((sub)=>{
   );
   let changesArr = [];
   tableRows.forEach((row)=>{
-    if(row.children.length<3) return; //skip collecting changes for new submissions
-    let fieldName = row.children[0].textContent;
-    let value = row.children[2].textContent;
+    let fieldName, value;
+    if(row.children.length<3){
+      fieldName = row.children[0].textContent;
+      value = row.children[1].textContent;
+    }
+    else{
+      fieldName = row.children[0].textContent;
+      value = row.children[2].textContent;
+    }
     changesArr.push(fieldName+":"+value);
   });
   let changes = changesArr.join(",");
@@ -83,6 +90,8 @@ submissions.forEach((sub)=>{
   while(!submissionElement.classList.contains("submission")){
     submissionElement = submissionElement.parentNode;
   }
+  //read the submission user
+  let submissionUser = sub.dataset.submitUser;
   //add accept button listener
   let acceptObj = {
     "id": submissionId,
@@ -90,7 +99,8 @@ submissions.forEach((sub)=>{
     "parentElem": submissionElement,
     "reason": null,
     "updateTarget": subTarget,
-    "updateChanges": changes
+    "updateChanges": changes,
+    "submissionUser": submissionUser
   };
   let acceptButton = sub.querySelector(".submissionAcceptButton");
   acceptButton.addEventListener("click",()=>{acceptOrRejectSubmission(acceptObj)});
@@ -104,11 +114,13 @@ submissions.forEach((sub)=>{
       "parentElem": submissionElement,
       "reason": subReason,
       "updateTarget": subTarget,
-      "updateChanges": changes
+      "updateChanges": changes,
+      "submissionUser": submissionUser
     };
     acceptOrRejectSubmission(rejectObj);
   });
   //remove dataset from submission
   sub.removeAttribute("data-update-id");
   sub.removeAttribute("data-update-target");
+  sub.removeAttribute("data-submit-user");
 });
