@@ -18,7 +18,7 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
   const queryOptions = {
     service: 'WMS',
     version: '1.3.0',
-    layers: 'ORStateHouse,ORStateSenate,ORSchoolDistricts,USHouse',
+    layers: 'congressionaldistrict,county,elementaryschooldistrict,place,secondaryschooldistrict,state,statehouse,statesenate,unifiedschooldistrict',
     crs: 'EPSG:4269',
     width: 1024,
     height: 1024,
@@ -48,18 +48,42 @@ const gisLocationQuery = (lat, lng) => new Promise((resolve, reject) => {
       let i, r
       for (i = 0; i < responseList.length; i++) {
         r = responseList[i]
-        if (r['qgs%3aushouse']) {
-          results.push(r['qgs%3aushouse']['qgs%3ageoid'] + r['qgs%3aushouse']['qgs%3anamelsad'])
+		//US Congress
+        if (r['qgs%3acongressionaldistrict']) {
+          results.push(r['qgs%3acongressionaldistrict']['qgs%3ageoid'] + r['qgs%3acongressionaldistrict']['qgs%3anamelsad'])
         }
-        if (r['qgs%3aorstatesenate']) {
-          results.push(r['qgs%3aorstatesenate']['qgs%3ageoid'] + r['qgs%3aorstatesenate']['qgs%3anamelsad'])
+		//US County
+        if (r['qgs%3acounty']) {
+          results.push(r['qgs%3acounty']['qgs%3ageoid'] + r['qgs%3acounty']['qgs%3anamelsad'])
         }
-        if (r['qgs%3aorstatehouse']) {
-          results.push(r['qgs%3aorstatehouse']['qgs%3ageoid'] + r['qgs%3aorstatehouse']['qgs%3anamelsad'])
+		//Cities, Towns, and CDPs
+        if (r['qgs%3aplace']) {
+          results.push(r['qgs%3aplace']['qgs%3ageoid'] + r['qgs%3aplace']['qgs%3anamelsad'])
         }
-        if (r['qgs%3aorschooldistricts']) {
-          results.push(r['qgs%3aorschooldistricts']['qgs%3ageoid'] + r['qgs%3aorschooldistricts']['qgs%3aname'])
+		//States
+        if (r['qgs%3astate']) {
+          results.push(r['qgs%3astate']['qgs%3ageoid'] + r['qgs%3astate']['qgs%3aname'])
         }
+		//State House
+        if (r['qgs%3astatehouse']) {
+          results.push(r['qgs%3astatehouse']['qgs%3ageoid'] + r['qgs%3astatehouse']['qgs%3anamelsad'])
+        }
+		//State Senate
+        if (r['qgs%3astatesenate']) {
+          results.push(r['qgs%3astatesenate']['qgs%3ageoid'] + r['qgs%3astatesenate']['qgs%3anamelsad'])
+        }
+		//School District
+        if (r['qgs%3aunifiedschooldistrict']) {
+          results.push(r['qgs%3aunifiedschooldistrict']['qgs%3ageoid'] + r['qgs%3aunifiedschooldistrict']['qgs%3aname'])
+        }
+		//School District 2
+        if (r['qgs%3aelementaryschooldistrict']) {
+          results.push(r['qgs%3aelementaryschooldistrict']['qgs%3ageoid'] + r['qgs%3aelementaryschooldistrict']['qgs%3aname'])
+        }
+		//School District 3
+        if (r['qgs%3asecondaryschooldistrict']) {
+          results.push(r['qgs%3asecondaryschooldistrict']['qgs%3ageoid'] + r['qgs%3asecondaryschooldistrict']['qgs%3aname'])
+        }		
       }
       resolve(results)
     } else {

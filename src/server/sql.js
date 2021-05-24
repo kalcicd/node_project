@@ -249,12 +249,12 @@ const getLocationProps = (gisResponse) => new Promise(async (resolve, reject) =>
   gisIdentifiers.push('USA') // add federal level results (mainly the president)
 
   // Send Query
-  console.log('QUERY:', queryString)
+  //console.log('QUERY:', queryString)
   const locationRes = await databasePool.query(queryString, [gisIdentifiers]).catch((err) => {
     console.error(err)
     reject(err)
   })
-  console.log('RESULT:', locationRes)
+  //console.log('RESULT:', locationRes)
 
   // make location list
   if (locationRes['rows'] !== undefined) {
