@@ -34,6 +34,8 @@ import {
   createAccount
 } from './sql';
 
+process.title = "NODE_server"
+
 const pathToTemplate = path.join(__dirname, './views/layout.html');
 const template = fs.readFileSync(pathToTemplate, 'utf8');
 // cookie session
@@ -786,8 +788,13 @@ app.use((req, res, next) => {
 
 // Opens a socket and listens for connections only if there is no parent module running the script
 if (!module.parent) {
+  //listen for http requests
   app.listen(config.server.port, config.server.address, () => {
     console.log(`Server started on port ${config.server.port} at address ${config.server.address}...`);
+  });
+  //listen for https requests
+  app.listen(config.server.secure_port, config.server.address, () => {
+    console.log(`Server started on port ${config.server.secure_port} at address ${config.server.address}`)
   });
 }
 
