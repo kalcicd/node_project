@@ -2,6 +2,8 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import express from 'express';
+import http from 'http';
+import https from 'https';
 import React from 'react';
 import { Pool } from 'pg';
 import { renderToString } from 'react-dom/server';
@@ -33,6 +35,12 @@ import {
   accountExists,
   createAccount
 } from './sql';
+
+process.title = "NODE_server"
+
+//fetch private key and certificate
+const pubKey = fs.readFileSync(config.https.keyPath);
+const certificate = fs.readFileSync(config.https.certificatePath);
 
 const pathToTemplate = path.join(__dirname, './views/layout.html');
 const template = fs.readFileSync(pathToTemplate, 'utf8');
@@ -786,8 +794,14 @@ app.use((req, res, next) => {
 
 // Opens a socket and listens for connections only if there is no parent module running the script
 if (!module.parent) {
-  app.listen(config.server.port, config.server.address, () => {
+  //listen for http requests
+  http.createServer(app).listen(config.server.port, config.server.address, () => {
     console.log(`Server started on port ${config.server.port} at address ${config.server.address}...`);
+  });
+  //listen for https requests
+  const creds = {key:pubKey, cert: certificate};
+  app.listen(config.server.securePort, config.server.address, () => {
+    console.log(`Server started on port ${config.server.securePort} at address ${config.server.address}`)
   });
 }
 

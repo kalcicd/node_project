@@ -25,6 +25,11 @@
   },
   "server":{
     "port": "PORT_NUMBER",
+    "securePort": "PORT_NUMBER",
     "address": "HOST_ADDRESS"
+  },
+  "https":{
+    "certificatePath": "PATH_TO_CERTIFICATE",
+    "keyPath": "PATH_TO_KEY"
   }
 }
