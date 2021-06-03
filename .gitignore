@@ -24,4 +24,4 @@ secret.txt
 # Config files
 config/default.json
 config/cert
-config/pubKey
+config/privKey
