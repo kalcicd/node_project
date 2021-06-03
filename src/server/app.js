@@ -39,7 +39,7 @@ import {
 process.title = "NODE_server"
 
 //fetch private key and certificate
-const pubKey = fs.readFileSync(config.https.keyPath);
+const privKey = fs.readFileSync(config.https.keyPath);
 const certificate = fs.readFileSync(config.https.certificatePath);
 
 const pathToTemplate = path.join(__dirname, './views/layout.html');
@@ -799,8 +799,8 @@ if (!module.parent) {
     console.log(`Server started on port ${config.server.port} at address ${config.server.address}...`);
   });
   //listen for https requests
-  const creds = {key:pubKey, cert: certificate};
-  app.listen(config.server.securePort, config.server.address, () => {
+  const creds = {key: privKey, cert: certificate};
+  https.createServer(creds, app).listen(config.server.securePort, config.server.address, () => {
     console.log(`Server started on port ${config.server.securePort} at address ${config.server.address}`)
   });
 }
