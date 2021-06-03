@@ -1,6 +1,6 @@
 import config from '../../config/default.json'
 import { Pool } from 'pg'
-import bcrypt from 'bcrypt'
+const bcrypt = require('bcryptjs');
 
 const databasePool = new Pool({
   host: config.postgresql.address,
