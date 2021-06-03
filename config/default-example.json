@@ -25,6 +25,7 @@
   },
   "server":{
     "port": "PORT_NUMBER",
+    "secure_port": "PORT_NUMBER",
     "address": "HOST_ADDRESS"
   }
 }

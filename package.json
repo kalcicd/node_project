@@ -15,7 +15,8 @@
     "test": "jest --coverage && standard",
     "test:watch": "jest --watch",
     "standard": "standard",
-    "standard:fix": "standard --fix"
+    "standard:fix": "standard --fix",
+    "stop": "pkill --signal SIGINT NODE_server"
   },
   "repository": {
     "type": "git",
