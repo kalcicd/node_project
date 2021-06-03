@@ -47,7 +47,7 @@ const template = fs.readFileSync(pathToTemplate, 'utf8');
 // cookie session
 const session = require('express-session');
 // bcrypt for password hashing
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const bcryptSaltRounds = 15;
 // nodemailer to send users emails
 const nodemailer = require('nodemailer');
