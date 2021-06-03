@@ -21,5 +21,7 @@ coverage
 #session secret key
 secret.txt
 
-# Config file
+# Config files
 config/default.json
+config/cert
+config/pubKey

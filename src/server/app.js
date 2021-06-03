@@ -38,13 +38,10 @@ import {
 
 process.title = "NODE_server"
 
-<<<<<<< HEAD
 //fetch private key and certificate
 const pubKey = fs.readFileSync(config.https.keyPath);
 const certificate = fs.readFileSync(config.https.certificatePath);
 
-=======
->>>>>>> 5c84d6ff82f666df75047bdde7db4fe38b85f3a9
 const pathToTemplate = path.join(__dirname, './views/layout.html');
 const template = fs.readFileSync(pathToTemplate, 'utf8');
 // cookie session
